@@ -24,6 +24,12 @@ python -m pip install .
 
 ## ⚡ Quick Start
 
+### Usage
+
+```bash
+havik -h
+```
+
 ### AWS S3
 
 ```bash
@@ -74,7 +80,7 @@ export LLM_HOST=http://localhost:11434
 src/havik/
 ├── aws/           # AWS-specific scanners
 ├── gcp/           # GCP-specific scanners
-├── az             # Azure-specific scanners
+├── az/            # Azure-specific scanners
 ├── cli.py         # CLI entry point
 ```
 
@@ -94,5 +100,5 @@ This is an early-stage project. All contributions, issue reports, and suggestion
 
 ## 🌍 Vision
 
-Cloud Security Scanner aims to be a vendor-agnostic, open-source solution that complements native cloud security tooling — especially for European companies with strong compliance needs.
+Havik Scanner aims to be a vendor-agnostic, open-source solution that complements native cloud security tooling — especially for European companies with strong compliance needs.
 
