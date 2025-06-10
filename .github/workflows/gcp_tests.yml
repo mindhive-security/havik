@@ -1,0 +1,33 @@
+name: Run GCP Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install GCP dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install --upgrade pip
+          pip install -r tests/requirements-gcp-test.txt
+          pip install -e .
+
+      - name: Run tests
+        run: |
+          source .venv/bin/activate
+          pytest --maxfail=5 --disable-warnings tests/gcp/

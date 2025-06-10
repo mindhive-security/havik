@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "havik"
+version = "0.2.0"
+description = "Cloud Security Scanner Tool"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {file = "LICENSE"}
+authors = [
+    {name = "icevirm", email = "icevirm13@gmail.com"}
+]
+dependencies = [
+    "boto3",
+    "rich",
+    "tqdm",
+    "google-cloud-storage",
+    "azure-identity",
+    "azure-mgmt-storage"
+]
+
+[project.scripts]
+havik = "havik.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/mindhive-security/havik"
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "-ra"
+testpaths = ["tests"]
+filterwarnings = [
+  "ignore::DeprecationWarning"
+]
