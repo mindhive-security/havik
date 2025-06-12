@@ -146,7 +146,7 @@ def test_get_key_location():
     encryption = get_bucket_encryption(s3, bucket_name)
     if 'KMSMasterKeyID' in encryption:
         encryption_key = encryption['KMSMasterKeyID']
-        key_location = get_key_location(s3, encryption_key)
+        key_location = get_key_location(encryption_key)
     else:
         bucket_location = get_bucket_location(s3, bucket_name)
         key_location = bucket_location
