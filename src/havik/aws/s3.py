@@ -6,7 +6,7 @@
     encryption or public access settings.
 '''
 from base64 import b64encode
-from boto3 import client as boto_client
+from boto3 import client as Client
 from botocore import exceptions
 from hashlib import md5
 from json import dumps, loads
@@ -14,14 +14,11 @@ from tqdm import tqdm
 
 from havik.shared import output, llm
 
-from .helpers import parse_arn
-
-s3 = boto_client('s3')
-kms = boto_client('kms')
+from .helpers import parse_arn, get_client
 
 
 # Encryption settings
-def get_bucket_encryption(bucket: str) -> dict:
+def get_bucket_encryption(s3: Client, bucket:str) -> dict:
     '''
         Gets encryption configuration from the S3 bucket
 
@@ -37,7 +34,7 @@ def get_bucket_encryption(bucket: str) -> dict:
         print(f'Encryption is not configured.')
 
 
-def check_sse_c_allowed(bucket: str) -> bool:
+def check_sse_c_allowed(s3: Client, bucket:str) -> bool:
     '''
         Checks if it is possible to upload and then get an object onto S3 bucket with a customer key (SSE-C)
 
@@ -94,7 +91,7 @@ def check_sse_c_allowed(bucket: str) -> bool:
     return sse_c_status
 
 
-def check_tls_enforced(bucket: str) -> bool:
+def check_tls_enforced(s3: Client, bucket:str) -> bool:
     '''
         Checks if TLS is enforced in the bucket policy
 
@@ -117,7 +114,7 @@ def check_tls_enforced(bucket: str) -> bool:
     return False
 
 
-def get_bucket_location(bucket: str) -> str:
+def get_bucket_location(s3: Client, bucket:str) -> str:
     '''
         Gets region where the bucket is located.
 
@@ -140,7 +137,7 @@ def get_key_location(encryption_key: str) -> str:
 
 
 # Public access settings
-def get_bucket_public_configuration(bucket: str) -> bool:
+def get_bucket_public_configuration(s3: Client, bucket:str) -> bool:
     '''
         Checks the public access configuration of the bucket
 
@@ -159,7 +156,7 @@ def get_bucket_public_configuration(bucket: str) -> bool:
 
 
 # Dispatcher
-def list_buckets() -> list:
+def list_buckets(s3: Client) -> list:
     '''
         Returns all S3 buckets in the current account, except CDK bootstrap one
 
@@ -173,7 +170,7 @@ def list_buckets() -> list:
     return buckets
 
 
-def evaluate_s3_encryption(bucket: str) -> dict:
+def evaluate_s3_encryption(bucket:str) -> dict:
     '''
         Outputs information about S3 bucket encryption settings
 
@@ -211,7 +208,7 @@ def evaluate_s3_encryption(bucket: str) -> dict:
     }
 
 
-def evaluate_s3_public_access(bucket: str) -> dict:
+def evaluate_s3_public_access(bucket:str) -> dict:
     '''
         Output information about S3 Public Access Block settings
 
@@ -223,7 +220,7 @@ def evaluate_s3_public_access(bucket: str) -> dict:
     }
 
 
-def evaluate_bucket_policy(bucket: str) -> dict:
+def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
     '''
         Evaluates bucket policy with the help of LLM
 
@@ -261,7 +258,9 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
             (bool) json - output in JSON format
         Returns: None
     '''
-    buckets = list_buckets()
+    s3_client = get_client('s3')
+
+    buckets = list_buckets(s3_client)
 
     bucket_security = {}
 
@@ -269,11 +268,11 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
         bucket_security[bucket] = {'BucketName': bucket}
 
         if enc:
-            bucket_security[bucket]['Encryption'] = evaluate_s3_encryption(bucket)
+            bucket_security[bucket]['Encryption'] = evaluate_s3_encryption(s3_client, bucket)
         if pub:
-            bucket_security[bucket]['PublicAccess'] = evaluate_s3_public_access(bucket)
+            bucket_security[bucket]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket)
             if not noai:
-                bucket_security[bucket]['PolicyEval'] = evaluate_bucket_policy(bucket)
+                bucket_security[bucket]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket)
 
     if json:
         output.output_json(bucket_security)

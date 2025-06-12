@@ -2,7 +2,7 @@ from boto3 import client
 from botocore import exceptions
 from json import dumps
 from moto import mock_aws
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from havik.aws.s3 import get_bucket_encryption, check_sse_c_allowed, check_tls_enforced, get_bucket_location, get_key_location, get_bucket_public_configuration, evaluate_bucket_policy
 
@@ -32,7 +32,7 @@ def test_get_bucket_encryption():
     s3.put_bucket_encryption(
         Bucket=bucket_name, ServerSideEncryptionConfiguration=encryption_config)
 
-    result = get_bucket_encryption(bucket_name)
+    result = get_bucket_encryption(s3, bucket_name)
     assert result['SSEAlgorithm'] == 'AES256'
 
 
@@ -49,7 +49,7 @@ def test_get_bucket_encryption_no_config():
         }
     )
 
-    result = get_bucket_encryption(bucket_name)
+    result = get_bucket_encryption(s3, bucket_name)
     assert result is None
 
 
@@ -64,7 +64,7 @@ def test_check_sse_c_allowed():
         }
     )
 
-    result = check_sse_c_allowed(bucket_name)
+    result = check_sse_c_allowed(s3, bucket_name)
     assert result is False  # Moto does not support SSE-C
 
 
@@ -93,7 +93,7 @@ def test_check_tls_enforced():
     }
     s3.put_bucket_policy(Bucket=bucket_name, Policy=dumps(bucket_policy))
 
-    assert check_tls_enforced(bucket_name) is True
+    assert check_tls_enforced(s3, bucket_name) is True
 
 
 @mock_aws
@@ -106,7 +106,7 @@ def test_check_tls_not_enforced():
         }
     )
 
-    assert check_tls_enforced(bucket_name) is False
+    assert check_tls_enforced(s3, bucket_name) is False
 
 
 @mock_aws
@@ -119,7 +119,7 @@ def test_get_bucket_location():
         }
     )
 
-    assert get_bucket_location(bucket_name) == DEFAULT_REGION
+    assert get_bucket_location(s3, bucket_name) == DEFAULT_REGION
 
 
 @mock_aws
@@ -143,12 +143,12 @@ def test_get_key_location():
     s3.put_bucket_encryption(
         Bucket=bucket_name, ServerSideEncryptionConfiguration=encryption_config)
 
-    encryption = get_bucket_encryption(bucket_name)
+    encryption = get_bucket_encryption(s3, bucket_name)
     if 'KMSMasterKeyID' in encryption:
         encryption_key = encryption['KMSMasterKeyID']
-        key_location = get_key_location(encryption_key)
+        key_location = get_key_location(s3, encryption_key)
     else:
-        bucket_location = get_bucket_location(bucket_name)
+        bucket_location = get_bucket_location(s3, bucket_name)
         key_location = bucket_location
 
     assert key_location == DEFAULT_REGION
@@ -167,7 +167,7 @@ def test_get_bucket_public_configuration():
     )
 
     try:
-        result = get_bucket_public_configuration(bucket_name)
+        result = get_bucket_public_configuration(s3, bucket_name)
     except exceptions.ClientError as exc:
         print('PublicAccessBlock is not supported by moto')
         result = True
@@ -203,7 +203,7 @@ def test_evaluate_bucket_policy(mock_ask_model):
         'Reason': 'Bucket is publicly accessible'
     }
 
-    result = evaluate_bucket_policy(bucket_name)
+    result = evaluate_bucket_policy(s3, bucket_name)
 
     assert result == {
         'PolicyStatus': 'Bad',
