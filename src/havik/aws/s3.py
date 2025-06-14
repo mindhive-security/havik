@@ -12,7 +12,7 @@ from hashlib import md5
 from json import dumps, loads
 from tqdm import tqdm
 
-from havik.shared import output, llm
+from havik.shared import output, llm, risk
 
 from .helpers import parse_arn, get_client
 
@@ -212,7 +212,7 @@ def evaluate_s3_encryption(s3: Client, bucket:str) -> dict:
     }
 
 
-def evaluate_s3_public_access(s3, bucket:str) -> dict:
+def evaluate_s3_public_access(s3: Client, bucket:str) -> dict:
     '''
         Output information about S3 Public Access Block settings
 
@@ -280,6 +280,8 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
             bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket_name)
             if not noai:
                 bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
+        
+        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket['CreationDate'])
 
     if json:
         output.output_json(bucket_security)
