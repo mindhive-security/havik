@@ -22,7 +22,8 @@ def get_bucket_encryption(s3: Client, bucket:str) -> dict:
     '''
         Gets encryption configuration from the S3 bucket
 
-        Args: (str) bucket - the name of the bucket to scan
+        Args: (boto3.client) s3 - S3 client
+              (str) bucket - the name of the bucket to scan
         Returns: (dict) Encryption configuration from response
     '''
     try:
@@ -38,7 +39,8 @@ def check_sse_c_allowed(s3: Client, bucket:str) -> bool:
     '''
         Checks if it is possible to upload and then get an object onto S3 bucket with a customer key (SSE-C)
 
-        Args: (str) bucket - the name of the bucket to scan
+        Args: (boto3.client) s3 - S3 client
+              (str) bucket - the name of the bucket to scan
         Returns: (bool) sse_c_status - if True, then SSE-C is allowed, posing a security risk
     '''
     object_key = 'example.txt'
@@ -95,7 +97,8 @@ def check_tls_enforced(s3: Client, bucket:str) -> bool:
     '''
         Checks if TLS is enforced in the bucket policy
 
-        Args: (str) bucket - the name of the bucket to scan
+        Args: (boto3.client) s3 - S3 client
+              (str) bucket - the name of the bucket to scan
         Returns: (bool) - if True, the TLS is enforced in the bucket policy
     '''
     try:
@@ -118,7 +121,8 @@ def get_bucket_location(s3: Client, bucket:str) -> str:
     '''
         Gets region where the bucket is located.
 
-        Args: (str) bucket - the name of the bucket to scan
+        Args: (boto3.client) s3 - S3 client
+              (str) bucket - the name of the bucket to scan
         Returns: (str) location - The bucket's region
     '''
     location = s3.get_bucket_location(Bucket=bucket)
@@ -141,7 +145,8 @@ def get_bucket_public_configuration(s3: Client, bucket:str) -> bool:
     '''
         Checks the public access configuration of the bucket
 
-        Args: (str) bucket - the name of the bucket to scan
+        Args: (boto3.client) s3 - S3 client
+              (str) bucket - the name of the bucket to scan
         Returns: (bool) - if True, public access is blocked completely
     '''
     public_access_block = s3.get_public_access_block(
@@ -160,24 +165,25 @@ def list_buckets(s3: Client) -> list:
     '''
         Returns all S3 buckets in the current account, except CDK bootstrap one
 
-        Args: None
+        Args: (boto3.client) s3 - S3 client
         Returns: (list) buckets - list of S3 buckets in the current account
     '''
     response = s3.list_buckets()
-    buckets = [bucket['Name'] for bucket in response['Buckets']
+    buckets = [{'BucketName': bucket['Name'], 'CreationDate': bucket['CreationDate']} for bucket in response['Buckets']
                if not bucket['Name'].startswith('cdk-')]
 
     return buckets
 
 
-def evaluate_s3_encryption(bucket:str) -> dict:
+def evaluate_s3_encryption(s3: Client, bucket:str) -> dict:
     '''
         Outputs information about S3 bucket encryption settings
 
-        Args: (str) bucket - name of S3 bucket to be scanned
+        Args: (boto3.client) s3 - S3 client
+              (str) bucket - name of S3 bucket to be scanned
         Returns: (dict) - encryption settings for the bucket
     '''
-    encryption = get_bucket_encryption(bucket)
+    encryption = get_bucket_encryption(s3, bucket)
     encryption_algorithm = encryption['SSEAlgorithm']
 
     if encryption_algorithm == 'AES256':
@@ -185,11 +191,9 @@ def evaluate_s3_encryption(bucket:str) -> dict:
     else:
         key = 'KMS managed'
 
-    sse_c_status = check_sse_c_allowed(bucket)
-    tls_status = check_tls_enforced(bucket)
-    bucket_location = get_bucket_location(bucket)
-
-    evaluate_bucket_policy(bucket)
+    sse_c_status = check_sse_c_allowed(s3, bucket)
+    tls_status = check_tls_enforced(s3, bucket)
+    bucket_location = get_bucket_location(s3, bucket)
 
     if 'KMSMasterKeyID' in encryption:
         encryption_key = encryption['KMSMasterKeyID']
@@ -208,15 +212,16 @@ def evaluate_s3_encryption(bucket:str) -> dict:
     }
 
 
-def evaluate_s3_public_access(bucket:str) -> dict:
+def evaluate_s3_public_access(s3, bucket:str) -> dict:
     '''
         Output information about S3 Public Access Block settings
 
-        Args: (str) bucket - name of S3 bucket to be scanned
+        Args: (boto3.client) s3 - S3 client
+              (str) bucket - name of S3 bucket to be scanned
         Returns: (dict) - status of public access block settings
     '''
     return {
-        'PublicAccess': get_bucket_public_configuration(bucket)
+        'PublicAccess': get_bucket_public_configuration(s3, bucket)
     }
 
 
@@ -224,7 +229,8 @@ def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
     '''
         Evaluates bucket policy with the help of LLM
 
-        Args: (str) bucket - name of S3 bucket to be scanned
+        Args: (boto3.client) s3 - S3 client
+              (str) bucket - name of S3 bucket to be scanned
         Returns: (dict) - evaluation result
     '''
     response = s3.get_bucket_policy(Bucket=bucket)
@@ -265,14 +271,15 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
     bucket_security = {}
 
     for bucket in tqdm(buckets, desc='Scanning Buckets', unit='bucket'):
-        bucket_security[bucket] = {'BucketName': bucket}
+        bucket_name = bucket['BucketName']
+        bucket_security[bucket_name] = bucket
 
         if enc:
-            bucket_security[bucket]['Encryption'] = evaluate_s3_encryption(s3_client, bucket)
+            bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(s3_client, bucket_name)
         if pub:
-            bucket_security[bucket]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket)
+            bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket_name)
             if not noai:
-                bucket_security[bucket]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket)
+                bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
 
     if json:
         output.output_json(bucket_security)
