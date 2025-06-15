@@ -170,9 +170,9 @@ def test_get_bucket_public_configuration():
         result = get_bucket_public_configuration(s3, bucket_name)
     except exceptions.ClientError as exc:
         print('PublicAccessBlock is not supported by moto')
-        result = True
+        result = 'Blocked'
 
-    assert result == True
+    assert result == 'Blocked'
 
 
 @mock_aws
@@ -199,15 +199,15 @@ def test_evaluate_bucket_policy(mock_ask_model):
     s3.put_bucket_policy(Bucket=bucket_name, Policy=dumps(test_policy))
 
     mock_ask_model.return_value = {
-        'Policy': 'Bad',
+        'Status': 'Bad',
         'Reason': 'Bucket is publicly accessible'
     }
 
     result = evaluate_bucket_policy(s3, bucket_name)
 
     assert result == {
-        'PolicyStatus': 'Bad',
-        'PolicyReason': 'Bucket is publicly accessible'
+        'Status': 'Bad',
+        'Reason': 'Bucket is publicly accessible'
     }
 
     mock_ask_model.assert_called_once()

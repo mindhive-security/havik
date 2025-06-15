@@ -12,7 +12,7 @@ from hashlib import md5
 from json import dumps, loads
 from tqdm import tqdm
 
-from havik.shared import output, llm
+from havik.shared import output, llm, risk
 
 from .helpers import parse_arn, get_client
 
@@ -212,7 +212,7 @@ def evaluate_s3_encryption(s3: Client, bucket:str) -> dict:
     }
 
 
-def evaluate_s3_public_access(s3, bucket:str) -> dict:
+def evaluate_s3_public_access(s3: Client, bucket:str) -> dict:
     '''
         Output information about S3 Public Access Block settings
 
@@ -220,9 +220,7 @@ def evaluate_s3_public_access(s3, bucket:str) -> dict:
               (str) bucket - name of S3 bucket to be scanned
         Returns: (dict) - status of public access block settings
     '''
-    return {
-        'PublicAccess': get_bucket_public_configuration(s3, bucket)
-    }
+    return {'Status': 'Blocked'} if get_bucket_public_configuration(s3, bucket) else {'Status': 'Allowed'}
 
 
 def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
@@ -238,18 +236,28 @@ def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
 
     prompt = \
     f'''
-        Evaluate the following AWS IAM S3 bucket policy. 
-        Respond strictly in JSON with this format: 
-        {{"Policy": "Good" or "Bad", "Reason": "short explanation"}}.
+        You are an automated security policy evaluator.
+        "Rules:\n"
+        "- If policy allows public access (Principal: *), mark as Bad.\n"
+        "- If policy allows all actions (Action: s3:*), mark as Bad.\n"
+        "- If there are wilcards in policy and no conditions, mark as Bad.\n"
+        "- If only internal actions (like logging), mark as Good.\n"
+        "- Otherwise, use best judgement.\n\n"
 
-        Policy:
+        Return ONLY a valid JSON object in this format:
+        {{
+        "Status": "Good" | "Bad",
+        "Reason": "<short explanation without line breaks>" (must be correct JSON serializable.)
+        }}
+
+        Evaluate the following AWS IAM S3 bucket policy:
         {dumps(policy, indent=2)}
     '''
     model_response = llm.ask_model(prompt)
 
     return {
-        'PolicyStatus': model_response['Policy'],
-        'PolicyReason': model_response['Reason']
+        'Status': model_response['Status'],
+        'Reason': model_response['Reason']
     }
 
 
@@ -273,6 +281,7 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
     for bucket in tqdm(buckets, desc='Scanning Buckets', unit='bucket'):
         bucket_name = bucket['BucketName']
         bucket_security[bucket_name] = bucket
+        bucket_security[bucket_name]['CreationDate'] = str(bucket['CreationDate'])
 
         if enc:
             bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(s3_client, bucket_name)
@@ -280,6 +289,8 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
             bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket_name)
             if not noai:
                 bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
+        
+        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket_name])
 
     if json:
         output.output_json(bucket_security)

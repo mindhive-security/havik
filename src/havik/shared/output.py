@@ -29,9 +29,9 @@ def output_table(config: dict, title: str) -> None:
 
     flattened = [flatten_dict(item) for item in config.values()]
 
-    # Special treatment for PolicyReason - should not be visible in the table
+    # Special treatment for PolicyEval.Reason - should not be visible in the table
     # The key should always be the same for AI evaluated policies
-    columns = sorted({key for d in flattened for key in d.keys() if key != 'PolicyEval.PolicyReason'})
+    columns = sorted({key for d in flattened for key in d.keys() if key != 'PolicyEval.Reason'})
 
     for col in columns:
         table.add_column(col, header_style='cyan', justify='center')
