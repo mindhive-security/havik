@@ -59,7 +59,7 @@ class TestGCSModule(unittest.TestCase):
         mock_get_client.return_value = mock_client
 
         result = evaluate_storage_public_access(mock_bucket)
-        self.assertEqual(result["Prevention"], True)
+        self.assertEqual(result["Status"], 'Blocked')
 
     @patch("havik.gcp.storage.get_client")
     def test_list_buckets(self, mock_get_client):

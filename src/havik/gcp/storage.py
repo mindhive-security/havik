@@ -71,7 +71,7 @@ def evaluate_bucket_policy(bucket: dict) -> dict:
     f'''
         Evaluate the following GCP storage bucket policy. 
         Respond strictly in JSON with this format: 
-        {{"Policy": "Good" or "Bad", "Reason": "short explanation"}}.
+        {{"Status": "Good" or "Bad", "Reason": "short explanation"}}.
 
         Policy:
         {dumps(policy_json, indent=2)}
@@ -79,7 +79,7 @@ def evaluate_bucket_policy(bucket: dict) -> dict:
     model_response = llm.ask_model(prompt)
 
     return {
-        'Status': model_response['Policy'],
+        'Status': model_response['Status'],
         'Reason': model_response['Reason']
     }
 

@@ -246,7 +246,7 @@ def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
 
         Return ONLY a valid JSON object in this format:
         {{
-        "Policy": "Good" | "Bad",
+        "Status": "Good" | "Bad",
         "Reason": "<short explanation without line breaks>" (must be correct JSON serializable.)
         }}
 
@@ -256,7 +256,7 @@ def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
     model_response = llm.ask_model(prompt)
 
     return {
-        'Status': model_response['Policy'],
+        'Status': model_response['Status'],
         'Reason': model_response['Reason']
     }
 
