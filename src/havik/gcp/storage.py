@@ -131,7 +131,7 @@ def evaluate_storage_security(enc: bool, pub: bool, noai: bool, json: bool) -> N
 
     for bucket in tqdm(buckets, desc='Scanning Buckets', unit='bucket'):
         bucket_security[bucket.name] = {'BucketName': bucket.name}
-        bucket_security[bucket.name]['CreationDate'] = bucket.time_created
+        bucket_security[bucket.name]['CreationDate'] = str(bucket.time_created)
 
         if enc:
             bucket_security[bucket.name]['Encryption'] = evaluate_storage_encryption(bucket)

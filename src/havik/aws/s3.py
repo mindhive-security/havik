@@ -236,11 +236,21 @@ def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
 
     prompt = \
     f'''
-        Evaluate the following AWS IAM S3 bucket policy. 
-        Respond strictly in JSON with this format: 
-        {{"Policy": "Good" or "Bad", "Reason": "short explanation"}}.
+        You are an automated security policy evaluator.
+        "Rules:\n"
+        "- If policy allows public access (Principal: *), mark as Bad.\n"
+        "- If policy allows all actions (Action: s3:*), mark as Bad.\n"
+        "- If there are wilcards in policy and no conditions, mark as Bad.\n"
+        "- If only internal actions (like logging), mark as Good.\n"
+        "- Otherwise, use best judgement.\n\n"
 
-        Policy:
+        Return ONLY a valid JSON object in this format:
+        {{
+        "Policy": "Good" | "Bad",
+        "Reason": "<short explanation without line breaks>" (must be correct JSON serializable.)
+        }}
+
+        Evaluate the following AWS IAM S3 bucket policy:
         {dumps(policy, indent=2)}
     '''
     model_response = llm.ask_model(prompt)
@@ -271,6 +281,7 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
     for bucket in tqdm(buckets, desc='Scanning Buckets', unit='bucket'):
         bucket_name = bucket['BucketName']
         bucket_security[bucket_name] = bucket
+        bucket_security[bucket_name]['CreationDate'] = str(bucket['CreationDate'])
 
         if enc:
             bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(s3_client, bucket_name)

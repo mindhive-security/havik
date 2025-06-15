@@ -15,8 +15,9 @@ def time_risk(creation_date: datetime) -> int:
     multiplier = TIME_RISK_MULTIPLIER
 
     now = datetime.now(timezone.utc)
+    created_dt = datetime.fromisoformat(creation_date)
 
-    time_delta = now - creation_date
+    time_delta = now - created_dt
     time_delta_hours = time_delta.total_seconds() / 3600
 
     # Set of resource's times of live to increase risk score

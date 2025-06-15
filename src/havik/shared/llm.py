@@ -11,7 +11,8 @@ def ask_model(prompt):
         json={
             'model': 'mistral',
             'prompt': prompt,
-            'stream': False
+            'stream': False,
+            'temperature': 0
         }
     )
 
