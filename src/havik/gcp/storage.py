@@ -2,7 +2,7 @@ from google.cloud import storage
 from json import dumps
 from tqdm import tqdm
 
-from havik.shared import output, llm
+from havik.shared import output, llm, risk
 
 
 def get_client() -> storage.Client:
@@ -79,8 +79,8 @@ def evaluate_bucket_policy(bucket: dict) -> dict:
     model_response = llm.ask_model(prompt)
 
     return {
-        'PolicyStatus': model_response['Policy'],
-        'PolicyReason': model_response['Reason']
+        'Status': model_response['Policy'],
+        'Reason': model_response['Reason']
     }
 
 
@@ -93,13 +93,13 @@ def evaluate_storage_public_access(bucket: dict) -> dict:
         Returns: (dict) - status of public access prevention
     '''
     bucket_iam = bucket.iam_configuration
-    prevention = False
+    public_access = 'Allowed'
 
     if bucket_iam.public_access_prevention == 'enforced':
-        prevention = True
+        public_access = 'Blocked'
 
     return {
-        'Prevention': prevention
+        'Status': public_access
     }
 
 
@@ -131,6 +131,7 @@ def evaluate_storage_security(enc: bool, pub: bool, noai: bool, json: bool) -> N
 
     for bucket in tqdm(buckets, desc='Scanning Buckets', unit='bucket'):
         bucket_security[bucket.name] = {'BucketName': bucket.name}
+        bucket_security[bucket.name]['CreationDate'] = bucket.time_created
 
         if enc:
             bucket_security[bucket.name]['Encryption'] = evaluate_storage_encryption(bucket)
@@ -138,6 +139,8 @@ def evaluate_storage_security(enc: bool, pub: bool, noai: bool, json: bool) -> N
             bucket_security[bucket.name]['PublicAccess'] = evaluate_storage_public_access(bucket)
             if not noai:
                 bucket_security[bucket.name]['PolicyEval'] = evaluate_bucket_policy(bucket)
+
+        bucket_security[bucket.name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket.name])
 
     if json:
         output.output_json(bucket_security)

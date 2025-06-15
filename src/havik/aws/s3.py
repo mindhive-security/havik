@@ -220,9 +220,7 @@ def evaluate_s3_public_access(s3: Client, bucket:str) -> dict:
               (str) bucket - name of S3 bucket to be scanned
         Returns: (dict) - status of public access block settings
     '''
-    return {
-        'PublicAccess': get_bucket_public_configuration(s3, bucket)
-    }
+    return {'Status': 'Blocked'} if get_bucket_public_configuration(s3, bucket) else {'Status': 'Allowed'}
 
 
 def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
@@ -248,8 +246,8 @@ def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
     model_response = llm.ask_model(prompt)
 
     return {
-        'PolicyStatus': model_response['Policy'],
-        'PolicyReason': model_response['Reason']
+        'Status': model_response['Policy'],
+        'Reason': model_response['Reason']
     }
 
 
@@ -281,7 +279,7 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
             if not noai:
                 bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
         
-        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket['CreationDate'])
+        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket_name])
 
     if json:
         output.output_json(bucket_security)
