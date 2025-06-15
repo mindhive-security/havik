@@ -50,6 +50,6 @@ def calculate_risk_score(bucket_security: dict) -> int:
     creation_date = bucket_security['CreationDate']
     
     risk_score += time_risk(creation_date)
-    risk_score += access_risk(bucket_security['PublicAccess']['Status'], bucket_security.get('PolicyEval', '')['Status'])
+    risk_score += access_risk(bucket_security['PublicAccess']['Status'], bucket_security.get('PolicyEval', {}).get('Status', ''))
 
     return risk_score
