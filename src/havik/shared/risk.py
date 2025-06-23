@@ -17,7 +17,44 @@
 '''
 from datetime import datetime, timezone
 
+
 TIME_RISK_MULTIPLIER = 5
+LOCATION_RISK_DEFAULT_REGION = 'eu'
+
+
+def location_risk(location: str) -> int:
+    '''
+        Calculates risk based on resource location.
+
+        Args: (str) location - resource location
+        Returns: (int) 
+    '''
+    weight = 0
+    
+    if not location.lower().startswith(LOCATION_RISK_DEFAULT_REGION):
+        weight += 40
+
+    return weight
+
+
+def encryption_risk(encryption_config: dict) -> int:
+    '''
+        Calculates risk score based on encryption settings.
+
+        Args: (dict) encryption_config - encryption_configuration
+    '''
+    weight = 0
+
+    tls_config = encryption_config.get('TLS')
+    key_location = encryption_config.get('KeyLocation')
+
+    if not tls_config:
+        weight += 20
+    
+    if key_location:
+        weight += location_risk(key_location)
+
+    return weight
 
 
 def time_risk(creation_date: datetime) -> int:
@@ -59,12 +96,12 @@ def access_risk(public_access_config: str, policy_eval: str) -> int:
     return weight
 
 
-def calculate_risk_score(bucket_security: dict) -> int:
+def calculate_risk_score(security_config: dict, noai: bool) -> int:
     risk_score = 0
 
-    creation_date = bucket_security['CreationDate']
-    
-    risk_score += time_risk(creation_date)
-    risk_score += access_risk(bucket_security['PublicAccess']['Status'], bucket_security.get('PolicyEval', {}).get('Status', ''))
+    risk_score += time_risk(security_config['CreationDate'])
+    risk_score += access_risk(security_config['PublicAccess']['Status'], security_config.get('PolicyEval', {}).get('Status', ''))
+    risk_score += location_risk(security_config['Location'])
+    risk_score += encryption_risk(security_config['Encryption'])
 
     return risk_score

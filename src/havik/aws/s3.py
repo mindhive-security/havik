@@ -216,7 +216,6 @@ def evaluate_s3_encryption(s3: Client, bucket:str) -> dict:
         key_location = bucket_location
 
     return {
-        'BucketLocation': bucket_location,
         'Algorithm': encryption_algorithm,
         'Key': encryption_key,
         'KeyLocation': key_location,
@@ -295,15 +294,14 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
         bucket_name = bucket['BucketName']
         bucket_security[bucket_name] = bucket
         bucket_security[bucket_name]['CreationDate'] = str(bucket['CreationDate'])
-
-        if enc:
-            bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(s3_client, bucket_name)
-        if pub:
-            bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket_name)
-            if not noai:
-                bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
+        bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(s3_client, bucket_name)
+        bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket_name)
+        bucket_security[bucket_name]['Location'] = get_bucket_location(s3_client, bucket_name)
         
-        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket_name])
+        if not noai:
+            bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
+        
+        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket_name], noai)
 
     if json:
         output.output_json(bucket_security)
