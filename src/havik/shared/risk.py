@@ -16,7 +16,7 @@
     This module evaluates the risk based on resource configuration settings.
 '''
 from datetime import datetime, timezone
-
+from havik.shared import agent
 
 TIME_RISK_MULTIPLIER = 5
 LOCATION_RISK_DEFAULT_REGION = 'eu'
@@ -103,5 +103,8 @@ def calculate_risk_score(security_config: dict, noai: bool) -> int:
     risk_score += access_risk(security_config['PublicAccess']['Status'], security_config.get('PolicyEval', {}).get('Status', ''))
     risk_score += location_risk(security_config['Location'])
     risk_score += encryption_risk(security_config['Encryption'])
+
+    ai_risk = agent.explain_bucket_risk(security_config, risk_score)
+    print(ai_risk)
 
     return risk_score

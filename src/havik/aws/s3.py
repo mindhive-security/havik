@@ -248,9 +248,9 @@ def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
 
     prompt = \
     f'''
-        You are an automated security policy evaluator.
+        You are an automated security AWS IAM policy evaluator.
         "Rules:\n"
-        "- If policy allows public access (Principal: *), mark as Bad.\n"
+        "- If the policy allows public access (Principal: *) and has no limiting conditions, mark as Bad.\n"
         "- If policy allows all actions (Action: s3:*), mark as Bad.\n"
         "- If there are wilcards in policy and no conditions, mark as Bad.\n"
         "- If only internal actions (like logging), mark as Good.\n"
@@ -259,7 +259,7 @@ def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
         Return ONLY a valid JSON object in this format:
         {{
         "Status": "Good" | "Bad",
-        "Reason": "<short explanation without line breaks>" (must be correct JSON serializable.)
+        "Reason": "<short explanation without line breaks>" (must be correct JSON serializable, do not use any special symbols or quotes.)
         }}
 
         Evaluate the following AWS IAM S3 bucket policy:
