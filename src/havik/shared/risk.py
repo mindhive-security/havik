@@ -98,13 +98,14 @@ def access_risk(public_access_config: str, policy_eval: str) -> int:
 
 def calculate_risk_score(security_config: dict, noai: bool) -> int:
     risk_score = 0
+    risk_reason = ''
 
     risk_score += time_risk(security_config['CreationDate'])
     risk_score += access_risk(security_config['PublicAccess']['Status'], security_config.get('PolicyEval', {}).get('Status', ''))
     risk_score += location_risk(security_config['Location'])
     risk_score += encryption_risk(security_config['Encryption'])
 
-    ai_risk = agent.explain_bucket_risk(security_config, risk_score)
-    print(ai_risk)
+    if not noai:
+        risk_reason = agent.explain_bucket_risk(security_config, risk_score)
 
-    return risk_score
+    return {'Score': risk_score, 'Reason': risk_reason}

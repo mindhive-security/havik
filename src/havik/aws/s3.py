@@ -253,6 +253,7 @@ def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
         "- If the policy allows public access (Principal: *) and has no limiting conditions, mark as Bad.\n"
         "- If policy allows all actions (Action: s3:*), mark as Bad.\n"
         "- If there are wilcards in policy and no conditions, mark as Bad.\n"
+        "- If cross-account or cross-service access is allowed and no conditions limiting it on SourceArn, SourceAccount or OrgId, mark as Bad.\n"
         "- If only internal actions (like logging), mark as Good.\n"
         "- Otherwise, use best judgement.\n\n"
 

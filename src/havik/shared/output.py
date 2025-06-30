@@ -18,6 +18,8 @@ from rich.table import Table
 
 from .helpers import flatten_dict
 
+from havik.shared import llm
+
 
 def output_json(config: dict) -> None:
     '''
@@ -43,9 +45,10 @@ def output_table(config: dict, title: str) -> None:
 
     flattened = [flatten_dict(item) for item in config.values()]
 
-    # Special treatment for PolicyEval.Reason - should not be visible in the table
+    # Special treatment for PolicyEval.Reason and Risk.Reason - 
+    # should not be visible in the table.
     # The key should always be the same for AI evaluated policies
-    columns = sorted({key for d in flattened for key in d.keys() if key != 'PolicyEval.Reason'})
+    columns = sorted({key for d in flattened for key in d.keys() if key != 'PolicyEval.Reason' and key != 'Risk.Reason'})
 
     for col in columns:
         table.add_column(col, header_style='cyan', justify='center')
