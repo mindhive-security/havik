@@ -32,7 +32,7 @@ def location_risk(location: str) -> int:
     weight = 0
     
     if not location.lower().startswith(LOCATION_RISK_DEFAULT_REGION):
-        weight += 40
+        weight += 10
 
     return weight
 
@@ -49,7 +49,7 @@ def encryption_risk(encryption_config: dict) -> int:
     key_location = encryption_config.get('KeyLocation')
 
     if not tls_config:
-        weight += 20
+        weight += 15
     
     if key_location:
         weight += location_risk(key_location)
@@ -88,7 +88,7 @@ def access_risk(public_access_config: str, policy_eval: str) -> int:
     weight = 0
 
     if public_access_config == 'Allowed':
-        weight += 50
+        weight += 20
 
     if policy_eval == 'Bad':
         weight += 20
