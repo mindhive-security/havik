@@ -12,6 +12,7 @@ llm = OllamaLLM(
     base_url=f"http://{LLM_HOST}",
 )
 
+
 def explain_bucket_risk(bucket_config: dict, score: int):
     bucket_name = bucket_config["BucketName"]
     encryption = bucket_config["Encryption"]
@@ -23,7 +24,7 @@ def explain_bucket_risk(bucket_config: dict, score: int):
 
     extra_context = """
 DORA (Digital Operational Resilience Act) is an EU regulation that requires financial institutions to implement secure ICT risk management practices, including data encryption, secure access policies, and clear accountability for third-party service providers. 
-""" 
+"""
 
     prompt = PromptTemplate.from_template(f"""
 You are a cloud security expert.
@@ -68,5 +69,5 @@ but provide possible corrections to the value if required.
     chain = RunnableSequence(prompt | llm | StrOutputParser())
 
     response = chain.invoke({})
-    
+
     return response

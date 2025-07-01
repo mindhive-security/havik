@@ -31,7 +31,7 @@ from .helpers import parse_arn, get_client
 
 
 # Encryption settings
-def get_bucket_encryption(s3: Client, bucket:str) -> dict:
+def get_bucket_encryption(s3: Client, bucket: str) -> dict:
     '''
         Gets encryption configuration from the S3 bucket
 
@@ -48,7 +48,7 @@ def get_bucket_encryption(s3: Client, bucket:str) -> dict:
         print(f'Encryption is not configured.')
 
 
-def check_sse_c_allowed(s3: Client, bucket:str) -> bool:
+def check_sse_c_allowed(s3: Client, bucket: str) -> bool:
     '''
         Checks if it is possible to upload and then get an object onto S3 bucket with a customer key (SSE-C)
 
@@ -106,7 +106,7 @@ def check_sse_c_allowed(s3: Client, bucket:str) -> bool:
     return sse_c_status
 
 
-def check_tls_enforced(s3: Client, bucket:str) -> bool:
+def check_tls_enforced(s3: Client, bucket: str) -> bool:
     '''
         Checks if TLS is enforced in the bucket policy
 
@@ -130,7 +130,7 @@ def check_tls_enforced(s3: Client, bucket:str) -> bool:
     return False
 
 
-def get_bucket_location(s3: Client, bucket:str) -> str:
+def get_bucket_location(s3: Client, bucket: str) -> str:
     '''
         Gets region where the bucket is located.
 
@@ -154,7 +154,7 @@ def get_key_location(encryption_key: str) -> str:
 
 
 # Public access settings
-def get_bucket_public_configuration(s3: Client, bucket:str) -> bool:
+def get_bucket_public_configuration(s3: Client, bucket: str) -> bool:
     '''
         Checks the public access configuration of the bucket
 
@@ -188,7 +188,7 @@ def list_buckets(s3: Client) -> list:
     return buckets
 
 
-def evaluate_s3_encryption(s3: Client, bucket:str) -> dict:
+def evaluate_s3_encryption(s3: Client, bucket: str) -> dict:
     '''
         Outputs information about S3 bucket encryption settings
 
@@ -224,7 +224,7 @@ def evaluate_s3_encryption(s3: Client, bucket:str) -> dict:
     }
 
 
-def evaluate_s3_public_access(s3: Client, bucket:str) -> dict:
+def evaluate_s3_public_access(s3: Client, bucket: str) -> dict:
     '''
         Output information about S3 Public Access Block settings
 
@@ -235,7 +235,7 @@ def evaluate_s3_public_access(s3: Client, bucket:str) -> dict:
     return {'Status': 'Blocked'} if get_bucket_public_configuration(s3, bucket) else {'Status': 'Allowed'}
 
 
-def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
+def evaluate_bucket_policy(s3: Client, bucket: str) -> dict:
     '''
         Evaluates bucket policy with the help of LLM
 
@@ -247,7 +247,7 @@ def evaluate_bucket_policy(s3: Client, bucket:str) -> dict:
     policy = loads(response['Policy'])
 
     prompt = \
-    f'''
+        f'''
         You are an automated security AWS IAM policy evaluator.
         "Rules:\n"
         "- If the policy allows public access (Principal: *) and has no limiting conditions, mark as Bad.\n"
@@ -294,15 +294,21 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
     for bucket in tqdm(buckets, desc='Scanning Buckets', unit='bucket'):
         bucket_name = bucket['BucketName']
         bucket_security[bucket_name] = bucket
-        bucket_security[bucket_name]['CreationDate'] = str(bucket['CreationDate'])
-        bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(s3_client, bucket_name)
-        bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket_name)
-        bucket_security[bucket_name]['Location'] = get_bucket_location(s3_client, bucket_name)
-        
+        bucket_security[bucket_name]['CreationDate'] = str(
+            bucket['CreationDate'])
+        bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(
+            s3_client, bucket_name)
+        bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(
+            s3_client, bucket_name)
+        bucket_security[bucket_name]['Location'] = get_bucket_location(
+            s3_client, bucket_name)
+
         if not noai:
-            bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
-        
-        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket_name], noai)
+            bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(
+                s3_client, bucket_name)
+
+        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(
+            bucket_security[bucket_name], noai)
 
     if json:
         output.output_json(bucket_security)

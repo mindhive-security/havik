@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 from havik.gcp.storage import parse_key, evaluate_storage_encryption, evaluate_storage_public_access, list_buckets
 
 
-class TestGCSModule(unittest.TestCase): 
+class TestGCSModule(unittest.TestCase):
 
     def test_parse_key(self):
         key = "projects/project-1234/locations/europe-west1/keyRings/storage-eu/cryptoKeys/buckets-eu"

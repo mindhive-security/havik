@@ -56,7 +56,8 @@ def main() -> None:
                                 action='store_true', help='Scan encryption settings')
     configurations.add_argument('-p', '--public', action='store_true',
                                 help='Scan public access settings')
-    configurations.add_argument('--no-ai', action='store_true', help="Disable using AI in evaluations")
+    configurations.add_argument(
+        '--no-ai', action='store_true', help="Disable using AI in evaluations")
 
     output = parser.add_argument_group("Output")
     output.add_argument('--json', action='store_true', help='Output in JSON')

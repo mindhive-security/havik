@@ -30,7 +30,7 @@ def location_risk(location: str) -> int:
         Returns: (int) 
     '''
     weight = 0
-    
+
     if not location.lower().startswith(LOCATION_RISK_DEFAULT_REGION):
         weight += 10
 
@@ -50,7 +50,7 @@ def encryption_risk(encryption_config: dict) -> int:
 
     if not tls_config:
         weight += 15
-    
+
     if key_location:
         weight += location_risk(key_location)
 
@@ -74,10 +74,10 @@ def time_risk(creation_date: datetime) -> int:
     # Set of resource's times of live to increase risk score
     thresholds = [12, 24, 168, 336, 720]
 
-    for i, limit in enumerate(thresholds, start = 0):
+    for i, limit in enumerate(thresholds, start=0):
         if time_delta_hours < limit:
             return i
-        
+
     return i * multiplier
 
 
@@ -101,7 +101,8 @@ def calculate_risk_score(security_config: dict, noai: bool) -> int:
     risk_reason = ''
 
     risk_score += time_risk(security_config['CreationDate'])
-    risk_score += access_risk(security_config['PublicAccess']['Status'], security_config.get('PolicyEval', {}).get('Status', ''))
+    risk_score += access_risk(security_config['PublicAccess']['Status'],
+                              security_config.get('PolicyEval', {}).get('Status', ''))
     risk_score += location_risk(security_config['Location'])
     risk_score += encryption_risk(security_config['Encryption'])
 

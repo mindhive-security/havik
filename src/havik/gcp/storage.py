@@ -82,7 +82,7 @@ def evaluate_bucket_policy(bucket: dict) -> dict:
     policy_json = dumps(policy.to_api_repr(), indent=2)
 
     prompt = \
-    f'''
+        f'''
         Evaluate the following GCP storage bucket policy. 
         Respond strictly in JSON with this format: 
         {{"Status": "Good" or "Bad", "Reason": "short explanation"}}.
@@ -148,13 +148,17 @@ def evaluate_storage_security(enc: bool, pub: bool, noai: bool, json: bool) -> N
         bucket_security[bucket.name]['CreationDate'] = str(bucket.time_created)
 
         if enc:
-            bucket_security[bucket.name]['Encryption'] = evaluate_storage_encryption(bucket)
+            bucket_security[bucket.name]['Encryption'] = evaluate_storage_encryption(
+                bucket)
         if pub:
-            bucket_security[bucket.name]['PublicAccess'] = evaluate_storage_public_access(bucket)
+            bucket_security[bucket.name]['PublicAccess'] = evaluate_storage_public_access(
+                bucket)
             if not noai:
-                bucket_security[bucket.name]['PolicyEval'] = evaluate_bucket_policy(bucket)
+                bucket_security[bucket.name]['PolicyEval'] = evaluate_bucket_policy(
+                    bucket)
 
-        bucket_security[bucket.name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket.name])
+        bucket_security[bucket.name]['Risk'] = risk.calculate_risk_score(
+            bucket_security[bucket.name])
 
     if json:
         output.output_json(bucket_security)
