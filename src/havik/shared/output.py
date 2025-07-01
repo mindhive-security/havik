@@ -18,8 +18,6 @@ from rich.table import Table
 
 from .helpers import flatten_dict
 
-from havik.shared import llm
-
 
 def output_json(config: dict) -> None:
     '''
