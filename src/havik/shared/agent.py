@@ -47,7 +47,7 @@ Please:
 1. Explain **why** this bucket got this risk score.
 2. Identify **potential issues**, even if risk = 0.
 3. Give **recommendations** to improve security even further.
-4. Define if the configuration compliant to DORA, GDPR, CIS and ISO 27018/27001
+4. Define if the configuration compliant to DORA, GDPR, CIS, NIST 800-53 and ISO 27018/27001
 
 Rules:
 SSE-C is bad an should not be used.
