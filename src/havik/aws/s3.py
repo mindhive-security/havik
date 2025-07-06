@@ -258,6 +258,8 @@ def evaluate_bucket_policy(s3: Client, bucket: str) -> dict:
         "- Otherwise, use best judgement.\n\n"
 
         Return ONLY a valid JSON object in this format:
+        Be VERY careful with special symbols like * and " in the output, so
+        the output is the properly renederable json string.
         {{
         "Status": "Good" | "Bad",
         "Reason": "<short explanation without line breaks>" (must be correct JSON serializable, do not use any special symbols or quotes.)
@@ -315,3 +317,5 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
     else:
         title = 'S3 Buckets Security Scan Results'
         output.output_table(bucket_security, title)
+    
+    output.output_html(bucket_security)

@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from jinja2 import Environment, FileSystemLoader
 from json import dumps
+from os import makedirs
 from rich.console import Console
 from rich.table import Table
 
@@ -57,3 +59,14 @@ def output_table(config: dict, title: str) -> None:
 
     console = Console()
     console.print(table)
+
+
+def output_html(data):
+    env = Environment(loader=FileSystemLoader("html/templates"))
+    template = env.get_template("report.html")
+
+    rendered_html = template.render(data=data)
+
+    makedirs("html/reports", exist_ok=True)
+    with open("html/reports/index.html", "w") as f:
+        f.write(rendered_html)
