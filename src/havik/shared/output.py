@@ -63,7 +63,7 @@ def output_table(config: dict, title: str) -> None:
 
 def output_html(data):
     env = Environment(loader=FileSystemLoader("html/templates"))
-    template = env.get_template("report.html")
+    template = env.get_template("report.html.j2")
 
     rendered_html = template.render(data=data)
 
