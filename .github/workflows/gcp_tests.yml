@@ -28,6 +28,7 @@ jobs:
 
       - name: Install GCP dependencies
         run: |
+          set -x
           python -m venv .venv
           source .venv/bin/activate
           pip install --upgrade pip
@@ -37,5 +38,6 @@ jobs:
 
       - name: Run tests
         run: |
+          set -x
           source .venv/bin/activate
           pytest --maxfail=5 --disable-warnings tests/gcp/
