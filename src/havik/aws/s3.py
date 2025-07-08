@@ -318,4 +318,4 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
         title = 'S3 Buckets Security Scan Results'
         output.output_table(bucket_security, title)
     
-    output.output_html(bucket_security)
+    #output.output_html(bucket_security)
