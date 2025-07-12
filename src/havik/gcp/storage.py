@@ -148,18 +148,18 @@ def evaluate_storage_security(enc: bool, pub: bool, noai: bool, json: bool, html
         bucket_security[bucket.name] = {'BucketName': bucket.name}
         bucket_security[bucket.name]['CreationDate'] = str(bucket.time_created)
 
-        if enc:
-            bucket_security[bucket.name]['Encryption'] = evaluate_storage_encryption(
+        bucket_security[bucket.name]['Encryption'] = evaluate_storage_encryption(
+            bucket)
+        bucket_security[bucket.name]['PublicAccess'] = evaluate_storage_public_access(
+            bucket)
+        bucket_security[bucket.name]['Location'] = evaluate_storage_encryption(bucket)['BucketLocation']
+        
+        if not noai:
+            bucket_security[bucket.name]['PolicyEval'] = evaluate_bucket_policy(
                 bucket)
-        if pub:
-            bucket_security[bucket.name]['PublicAccess'] = evaluate_storage_public_access(
-                bucket)
-            if not noai:
-                bucket_security[bucket.name]['PolicyEval'] = evaluate_bucket_policy(
-                    bucket)
 
         bucket_security[bucket.name]['Risk'] = risk.calculate_risk_score(
-            bucket_security[bucket.name])
+            bucket_security[bucket.name], noai)
 
     if json:
         output.output_json(bucket_security)
