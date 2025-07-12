@@ -128,7 +128,7 @@ def list_buckets() -> list:
     return get_client().list_buckets()
 
 
-def evaluate_storage_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
+def evaluate_storage_security(enc: bool, pub: bool, noai: bool, json: bool, html: bool) -> None:
     '''
         Runs different security checks on GCS buckets in the account and reports the results
 
@@ -137,6 +137,7 @@ def evaluate_storage_security(enc: bool, pub: bool, noai: bool, json: bool) -> N
             (bool) pub - scan public access settings
             (bool) noai - disable evaluation with LLM
             (bool) json - output in JSON format
+            (bool) html - output in HTML format
         Returns: None
     '''
     buckets = list_buckets()
@@ -162,6 +163,8 @@ def evaluate_storage_security(enc: bool, pub: bool, noai: bool, json: bool) -> N
 
     if json:
         output.output_json(bucket_security)
+    elif html:
+        output.output_html(bucket_security)
     else:
         title = 'GCS Buckets Security Scan Results'
         output.output_table(bucket_security, title)

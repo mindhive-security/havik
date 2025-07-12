@@ -61,6 +61,7 @@ def main() -> None:
 
     output = parser.add_argument_group("Output")
     output.add_argument('--json', action='store_true', help='Output in JSON')
+    output.add_argument('--html', action='store_true', help='Output in HTML')
 
     account = parser.add_argument_group("Account details")
     account.add_argument('--subscription',
@@ -74,14 +75,14 @@ def main() -> None:
     if args.provider == 'aws':
         if args.service == 's3':
             aws.s3.evaluate_s3_security(enc=args.encryption,
-                                        pub=args.public, noai=args.no_ai, json=args.json)
+                                        pub=args.public, noai=args.no_ai, json=args.json, html=args.html)
         else:
             print(f'Service {args.service} is not supported.')
             print(f'Supported services: {", ".join(SUPPORTED_SERVICES_AWS)}')
     elif args.provider == 'gcp':
         if args.service == 'storage':
             gcp.storage.evaluate_storage_security(
-                enc=args.encryption, pub=args.public, noai=args.no_ai, json=args.json)
+                enc=args.encryption, pub=args.public, noai=args.no_ai, json=args.json, html=args.html)
         else:
             print(f'Service {args.service} is not supported.')
             print(f'Supported services: {", ".join(SUPPORTED_SERVICES_GCP)}')
@@ -93,7 +94,8 @@ def main() -> None:
             az.storage_account.evaluate_storage_security(sub=args.subscription,
                                                          enc=args.encryption, pub=args.public,
                                                          noai=args.no_ai,
-                                                         json=args.json)
+                                                         json=args.json,
+                                                         html=args.html)
         else:
             print(f'Service {args.service} is not supported.')
             print(f'Supported services: {", ".join(SUPPORTED_SERVICES_AZ)}')

@@ -86,7 +86,7 @@ def check_public_access(storage_account) -> dict:
     return public_status
 
 
-def evaluate_storage_security(sub, enc: bool, pub: bool, noai: bool, json: bool) -> None:
+def evaluate_storage_security(sub, enc: bool, pub: bool, noai: bool, json: bool, html: bool) -> None:
     '''
         Runs different security checks on Azure Storage accounts in the subscription and reports the results
 
@@ -95,6 +95,7 @@ def evaluate_storage_security(sub, enc: bool, pub: bool, noai: bool, json: bool)
             (bool) pub - scan public access settings
             (bool) noai - disable evaluation with LLM
             (bool) json - output in JSON format
+            (bool) html - output in HTML format
         Returns: None
     '''
     # TODO:centralize how to aquire login tokens/credentials
@@ -119,6 +120,8 @@ def evaluate_storage_security(sub, enc: bool, pub: bool, noai: bool, json: bool)
 
     if json:
         output.output_json(storage_account_security)
+    elif html:
+        output.output_html(storage_account_security)
     else:
         title = 'Azure Storage Accounts Security Scan Results'
         output.output_table(storage_account_security, title)

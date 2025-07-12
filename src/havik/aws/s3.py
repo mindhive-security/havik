@@ -276,7 +276,7 @@ def evaluate_bucket_policy(s3: Client, bucket: str) -> dict:
     }
 
 
-def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
+def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool, html: bool) -> None:
     '''
         Runs different security checks on S3 buckets in the account and reports the results
 
@@ -285,6 +285,7 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
             (bool) pub - scan public access settings
             (bool) noai - disable evaluation with LLM
             (bool) json - output in JSON format
+            (bool) html - output in HTML format
         Returns: None
     '''
     s3_client = get_client('s3')
@@ -314,8 +315,8 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool) -> None:
 
     if json:
         output.output_json(bucket_security)
+    elif html:
+        output.output_html(bucket_security)
     else:
         title = 'S3 Buckets Security Scan Results'
         output.output_table(bucket_security, title)
-    
-    #output.output_html(bucket_security)
