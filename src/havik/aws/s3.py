@@ -97,8 +97,7 @@ def check_sse_c_allowed(s3: Client, bucket: str) -> bool:
             Key=object_key,
             SSECustomerAlgorithm='AES256',
             SSECustomerKey=b64encode(encryption_key).decode('utf-8'),
-            SSECustomerKeyMD5=b64encode(
-                md5(encryption_key).digest()).decode('utf-8')
+            SSECustomerKeyMD5=b64encode(md5(encryption_key).digest()).decode('utf-8')
         )
     except:
         print('Something went wrong with getting object')
@@ -182,8 +181,7 @@ def list_buckets(s3: Client) -> list:
         Returns: (list) buckets - list of S3 buckets in the current account
     '''
     response = s3.list_buckets()
-    buckets = [{'BucketName': bucket['Name'], 'CreationDate': bucket['CreationDate']} for bucket in response['Buckets']
-               if not bucket['Name'].startswith('cdk-')]
+    buckets = [{'BucketName': bucket['Name'], 'CreationDate': bucket['CreationDate']} for bucket in response['Buckets'] if not bucket['Name'].startswith('cdk-')]
 
     return buckets
 
@@ -297,21 +295,15 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool, html: boo
     for bucket in tqdm(buckets, desc='Scanning Buckets', unit='bucket'):
         bucket_name = bucket['BucketName']
         bucket_security[bucket_name] = bucket
-        bucket_security[bucket_name]['CreationDate'] = str(
-            bucket['CreationDate'])
-        bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(
-            s3_client, bucket_name)
-        bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(
-            s3_client, bucket_name)
-        bucket_security[bucket_name]['Location'] = get_bucket_location(
-            s3_client, bucket_name)
+        bucket_security[bucket_name]['CreationDate'] = str(bucket['CreationDate'])
+        bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(s3_client, bucket_name)
+        bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket_name)
+        bucket_security[bucket_name]['Location'] = get_bucket_location(s3_client, bucket_name)
 
         if not noai:
-            bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(
-                s3_client, bucket_name)
+            bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
 
-        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(
-            bucket_security[bucket_name], noai)
+        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket_name], noai)
 
     if json:
         output.output_json(bucket_security)

@@ -101,8 +101,7 @@ def calculate_risk_score(security_config: dict, noai: bool) -> int:
     risk_reason = ''
 
     risk_score += time_risk(security_config['CreationDate'])
-    risk_score += access_risk(security_config['PublicAccess']['Status'],
-                              security_config.get('PolicyEval', {}).get('Status', ''))
+    risk_score += access_risk(security_config['PublicAccess']['Status'], security_config.get('PolicyEval', {}).get('Status', ''))
     risk_score += location_risk(security_config['Location'])
     risk_score += encryption_risk(security_config['Encryption'])
 

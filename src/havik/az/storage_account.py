@@ -106,15 +106,12 @@ def evaluate_storage_security(sub, enc: bool, pub: bool, noai: bool, json: bool,
     storage_account_security = {}
 
     for storage in tqdm(storage_accounts, desc='Scanning Storage Accounts', unit='storage'):
-        storage_account_security[storage.name] = {
-            'StorageAccountName': storage.name}
+        storage_account_security[storage.name] = {'StorageAccountName': storage.name}
 
         if enc:
-            storage_account_security[storage.name]['Encryption'] = check_encryption(
-                storage)
+            storage_account_security[storage.name]['Encryption'] = check_encryption(storage)
         if pub:
-            storage_account_security[storage.name]['PublicAccess'] = check_public_access(
-                storage)
+            storage_account_security[storage.name]['PublicAccess'] = check_public_access(storage)
             if not noai:
                 pass
 

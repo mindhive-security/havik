@@ -45,27 +45,22 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=description)
 
     provider = parser.add_argument_group("Cloud provider")
-    provider.add_argument('provider', choices=[
-                          'aws', 'gcp', 'az'], default='aws', help='Cloud provider')
+    provider.add_argument('provider', choices=['aws', 'gcp', 'az'], default='aws', help='Cloud provider')
 
     services = parser.add_argument_group("Services")
     services.add_argument('service', help='Cloud service')
 
     configurations = parser.add_argument_group("Configurations")
-    configurations.add_argument('-e', '--encryption',
-                                action='store_true', help='Scan encryption settings')
-    configurations.add_argument('-p', '--public', action='store_true',
-                                help='Scan public access settings')
-    configurations.add_argument(
-        '--no-ai', action='store_true', help="Disable using AI in evaluations")
+    configurations.add_argument('-e', '--encryption', action='store_true', help='Scan encryption settings')
+    configurations.add_argument('-p', '--public', action='store_true', help='Scan public access settings')
+    configurations.add_argument('--no-ai', action='store_true', help="Disable using AI in evaluations")
 
     output = parser.add_argument_group("Output")
     output.add_argument('--json', action='store_true', help='Output in JSON')
     output.add_argument('--html', action='store_true', help='Output in HTML')
 
     account = parser.add_argument_group("Account details")
-    account.add_argument('--subscription',
-                         help='Azure subscription id to scan')
+    account.add_argument('--subscription', help='Azure subscription id to scan')
 
     args = parser.parse_args()
 
@@ -74,8 +69,7 @@ def main() -> None:
 
     if args.provider == 'aws':
         if args.service == 's3':
-            aws.s3.evaluate_s3_security(enc=args.encryption,
-                                        pub=args.public, noai=args.no_ai, json=args.json, html=args.html)
+            aws.s3.evaluate_s3_security(enc=args.encryption, pub=args.public, noai=args.no_ai, json=args.json, html=args.html)
         else:
             print(f'Service {args.service} is not supported.')
             print(f'Supported services: {", ".join(SUPPORTED_SERVICES_AWS)}')
@@ -91,11 +85,7 @@ def main() -> None:
             parser.error('--subscription is required when provider is "az"')
 
         if args.service == 'storage':
-            az.storage_account.evaluate_storage_security(sub=args.subscription,
-                                                         enc=args.encryption, pub=args.public,
-                                                         noai=args.no_ai,
-                                                         json=args.json,
-                                                         html=args.html)
+            az.storage_account.evaluate_storage_security(sub=args.subscription, enc=args.encryption, pub=args.public, noai=args.no_ai, json=args.json, html=args.html)
         else:
             print(f'Service {args.service} is not supported.')
             print(f'Supported services: {", ".join(SUPPORTED_SERVICES_AZ)}')
