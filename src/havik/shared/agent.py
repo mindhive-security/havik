@@ -23,7 +23,7 @@ def explain_bucket_risk(bucket_config: dict, score: int):
     location = bucket_config["Location"]
 
     extra_context = """
-DORA (Digital Operational Resilience Act) is an EU regulation that requires financial institutions to implement secure ICT risk management practices, including data encryption, secure access policies, and clear accountability for third-party service providers. 
+DORA (Digital Operational Resilience Act) is an EU regulation that requires financial institutions to implement secure ICT risk management practices, including data encryption, secure access policies, and clear accountability for third-party service providers.
 """
 
     prompt = PromptTemplate.from_template(f"""

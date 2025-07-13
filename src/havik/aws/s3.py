@@ -99,7 +99,7 @@ def check_sse_c_allowed(s3: Client, bucket: str) -> bool:
             SSECustomerKey=b64encode(encryption_key).decode('utf-8'),
             SSECustomerKeyMD5=b64encode(md5(encryption_key).digest()).decode('utf-8')
         )
-    except:
+    except BaseException:
         print('Something went wrong with getting object')
 
     return sse_c_status
@@ -181,7 +181,8 @@ def list_buckets(s3: Client) -> list:
         Returns: (list) buckets - list of S3 buckets in the current account
     '''
     response = s3.list_buckets()
-    buckets = [{'BucketName': bucket['Name'], 'CreationDate': bucket['CreationDate']} for bucket in response['Buckets'] if not bucket['Name'].startswith('cdk-')]
+    buckets = [{'BucketName': bucket['Name'], 'CreationDate': bucket['CreationDate']}
+               for bucket in response['Buckets'] if not bucket['Name'].startswith('cdk-')]
 
     return buckets
 

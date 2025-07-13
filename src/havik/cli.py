@@ -21,7 +21,7 @@
     what modules will be launched.
 
     The main focus of scanning is to indicate problematic misconfigured
-    services which can pose a security risk. The tool itself does not 
+    services which can pose a security risk. The tool itself does not
     evaluate the risk, it should be used in alignment with existing
     threat model.
 '''
@@ -69,7 +69,12 @@ def main() -> None:
 
     if args.provider == 'aws':
         if args.service == 's3':
-            aws.s3.evaluate_s3_security(enc=args.encryption, pub=args.public, noai=args.no_ai, json=args.json, html=args.html)
+            aws.s3.evaluate_s3_security(
+                enc=args.encryption,
+                pub=args.public,
+                noai=args.no_ai,
+                json=args.json,
+                html=args.html)
         else:
             print(f'Service {args.service} is not supported.')
             print(f'Supported services: {", ".join(SUPPORTED_SERVICES_AWS)}')
@@ -85,7 +90,13 @@ def main() -> None:
             parser.error('--subscription is required when provider is "az"')
 
         if args.service == 'storage':
-            az.storage_account.evaluate_storage_security(sub=args.subscription, enc=args.encryption, pub=args.public, noai=args.no_ai, json=args.json, html=args.html)
+            az.storage_account.evaluate_storage_security(
+                sub=args.subscription,
+                enc=args.encryption,
+                pub=args.public,
+                noai=args.no_ai,
+                json=args.json,
+                html=args.html)
         else:
             print(f'Service {args.service} is not supported.')
             print(f'Supported services: {", ".join(SUPPORTED_SERVICES_AZ)}')

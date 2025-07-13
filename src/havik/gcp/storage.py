@@ -83,8 +83,8 @@ def evaluate_bucket_policy(bucket: dict) -> dict:
 
     prompt = \
         f'''
-        Evaluate the following GCP storage bucket policy. 
-        Respond strictly in JSON with this format: 
+        Evaluate the following GCP storage bucket policy.
+        Respond strictly in JSON with this format:
         {{"Status": "Good" or "Bad", "Reason": "short explanation"}}.
 
         Policy:
@@ -151,7 +151,7 @@ def evaluate_storage_security(enc: bool, pub: bool, noai: bool, json: bool, html
         bucket_security[bucket.name]['Encryption'] = evaluate_storage_encryption(bucket)
         bucket_security[bucket.name]['PublicAccess'] = evaluate_storage_public_access(bucket)
         bucket_security[bucket.name]['Location'] = evaluate_storage_encryption(bucket)['BucketLocation']
-        
+
         if not noai:
             bucket_security[bucket.name]['PolicyEval'] = evaluate_bucket_policy(bucket)
 
