@@ -21,6 +21,7 @@
 from base64 import b64encode
 from boto3 import client as Client
 from botocore import exceptions
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from hashlib import md5
 from json import dumps, loads
 from tqdm import tqdm
@@ -152,6 +153,25 @@ def get_key_location(encryption_key: str) -> str:
     return parse_arn(encryption_key)[3]
 
 
+def get_bucket_versioning(s3: Client, bucket: str) -> dict:
+    '''
+        Checks the status of bucket versioning
+
+        Args: (boto3.client) s3 - S3 client
+              (str) bucket - the name of the bucket to scan
+        Returns: (dict) - Bucket versioning status and MFA delete status
+    '''
+    try:
+        bucket_versioning = s3.get_bucket_versioning(Bucket=bucket)['Status']
+    except KeyError:
+        bucket_versioning = {'Status': None, 'MFADelete': None}
+
+    return {
+        'BucketVersioning': bucket_versioning['Status'],
+        'VersioningMFADelete': bucket_versioning['MFADelete']
+    }
+
+
 # Public access settings
 def get_bucket_public_configuration(s3: Client, bucket: str) -> bool:
     '''
@@ -275,6 +295,20 @@ def evaluate_bucket_policy(s3: Client, bucket: str) -> dict:
     }
 
 
+def scan_bucket(s3_client, bucket):
+    bucket_name = bucket['BucketName']
+    result = {
+        'BucketName': bucket_name,
+        'CreationDate': str(bucket['CreationDate']),
+        'Encryption': evaluate_s3_encryption(s3_client, bucket_name),
+        'PublicAccess': evaluate_s3_public_access(s3_client, bucket_name),
+        'Location': get_bucket_location(s3_client, bucket_name),
+        'Versioning': get_bucket_versioning(s3_client, bucket_name),
+        #'Risk': risk.calculate_risk_score(bucket_name, False)
+    }
+    return bucket_name, result
+
+
 def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool, html: bool) -> None:
     '''
         Runs different security checks on S3 buckets in the account and reports the results
@@ -293,18 +327,26 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool, html: boo
 
     bucket_security = {}
 
-    for bucket in tqdm(buckets, desc='Scanning Buckets', unit='bucket'):
-        bucket_name = bucket['BucketName']
-        bucket_security[bucket_name] = bucket
-        bucket_security[bucket_name]['CreationDate'] = str(bucket['CreationDate'])
-        bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(s3_client, bucket_name)
-        bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket_name)
-        bucket_security[bucket_name]['Location'] = get_bucket_location(s3_client, bucket_name)
+    with ThreadPoolExecutor(max_workers=16) as executor:
+        futures = [executor.submit(scan_bucket, s3_client, bucket) for bucket in buckets]
+    
+    for future in tqdm(as_completed(futures), total=len(futures), desc='Scanning Buckets', unit='bucket'):
+        bucket_name, data = future.result()
+        bucket_security[bucket_name] = data
 
-        if not noai:
-            bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
+    # for bucket in tqdm(buckets, desc='Scanning Buckets', unit='bucket'):
+    #     bucket_name = bucket['BucketName']
+    #     bucket_security[bucket_name] = bucket
+    #     bucket_security[bucket_name]['CreationDate'] = str(bucket['CreationDate'])
+    #     bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(s3_client, bucket_name)
+    #     bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket_name)
+    #     bucket_security[bucket_name]['Location'] = get_bucket_location(s3_client, bucket_name)
+    #     bucket_security[bucket_name]['Versioning'] = get_bucket_versioning(s3_client, bucket_name)
 
-        bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket_name], noai)
+    #     if not noai:
+    #         bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
+
+    #     bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket_name], noai)
 
     if json:
         output.output_json(bucket_security)
