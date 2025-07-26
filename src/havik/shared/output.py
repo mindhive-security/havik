@@ -49,7 +49,8 @@ def output_table(config: dict, title: str) -> None:
     # should not be visible in the table.
     # The key should always be the same for AI evaluated policies
     columns = sorted({key for d in flattened for key in d.keys() if key !=
-                     'PolicyEval.Reason' and key != 'Risk.Reason'})
+                     'PolicyEval.Reason' and key != 'Risk.Reason' and
+                     key != 'Versioning.MFADelete'})
 
     for col in columns:
         table.add_column(col, header_style='cyan', justify='center')

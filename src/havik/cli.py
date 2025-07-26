@@ -51,8 +51,6 @@ def main() -> None:
     services.add_argument('service', help='Cloud service')
 
     configurations = parser.add_argument_group("Configurations")
-    configurations.add_argument('-e', '--encryption', action='store_true', help='Scan encryption settings')
-    configurations.add_argument('-p', '--public', action='store_true', help='Scan public access settings')
     configurations.add_argument('--no-ai', action='store_true', help="Disable using AI in evaluations")
 
     output = parser.add_argument_group("Output")
@@ -64,14 +62,9 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if not (args.encryption or args.public):
-        args.encryption = args.public = True
-
     if args.provider == 'aws':
         if args.service == 's3':
             aws.s3.evaluate_s3_security(
-                enc=args.encryption,
-                pub=args.public,
                 noai=args.no_ai,
                 json=args.json,
                 html=args.html)
@@ -81,7 +74,7 @@ def main() -> None:
     elif args.provider == 'gcp':
         if args.service == 'storage':
             gcp.storage.evaluate_storage_security(
-                enc=args.encryption, pub=args.public, noai=args.no_ai, json=args.json, html=args.html)
+                noai=args.no_ai, json=args.json, html=args.html)
         else:
             print(f'Service {args.service} is not supported.')
             print(f'Supported services: {", ".join(SUPPORTED_SERVICES_GCP)}')
@@ -92,8 +85,6 @@ def main() -> None:
         if args.service == 'storage':
             az.storage_account.evaluate_storage_security(
                 sub=args.subscription,
-                enc=args.encryption,
-                pub=args.public,
                 noai=args.no_ai,
                 json=args.json,
                 html=args.html)

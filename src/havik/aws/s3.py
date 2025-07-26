@@ -21,7 +21,7 @@
 from base64 import b64encode
 from boto3 import client as Client
 from botocore import exceptions
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 from hashlib import md5
 from json import dumps, loads
 from tqdm import tqdm
@@ -162,14 +162,12 @@ def get_bucket_versioning(s3: Client, bucket: str) -> dict:
         Returns: (dict) - Bucket versioning status and MFA delete status
     '''
     try:
-        bucket_versioning = s3.get_bucket_versioning(Bucket=bucket)['Status']
+        bucket_versioning = s3.get_bucket_versioning(Bucket=bucket)
+        bucket_versioning['Status']
     except KeyError:
         bucket_versioning = {'Status': None, 'MFADelete': None}
 
-    return {
-        'BucketVersioning': bucket_versioning['Status'],
-        'VersioningMFADelete': bucket_versioning['MFADelete']
-    }
+    return bucket_versioning
 
 
 # Public access settings
@@ -295,27 +293,44 @@ def evaluate_bucket_policy(s3: Client, bucket: str) -> dict:
     }
 
 
-def scan_bucket(s3_client, bucket):
+def scan_bucket(s3: Client, bucket: str, noai: bool) -> tuple[str, dict]:
+    '''
+        Run security checks agains the bucket.
+
+        Args: (boto3.client) s3 - S3 client
+              (str) bucket - name of S3 bucket to be scanned
+              (bool) noai - disable evaluation with LLM
+
+        Returns: (str) bucket_name, (dict) result - the name of the bucket and evaluation dictionary
+    '''
     bucket_name = bucket['BucketName']
+
+    print(f'Start scanning {bucket_name}')
+
     result = {
         'BucketName': bucket_name,
         'CreationDate': str(bucket['CreationDate']),
-        'Encryption': evaluate_s3_encryption(s3_client, bucket_name),
-        'PublicAccess': evaluate_s3_public_access(s3_client, bucket_name),
-        'Location': get_bucket_location(s3_client, bucket_name),
-        'Versioning': get_bucket_versioning(s3_client, bucket_name),
-        #'Risk': risk.calculate_risk_score(bucket_name, False)
+        'Encryption': evaluate_s3_encryption(s3, bucket_name),
+        'PublicAccess': evaluate_s3_public_access(s3, bucket_name),
+        'Location': get_bucket_location(s3, bucket_name),
+        'Versioning': get_bucket_versioning(s3, bucket_name),
     }
+
+    if not noai:
+        result['PolicyEval'] = evaluate_bucket_policy(s3, bucket_name)
+
+    result['Risk'] = risk.calculate_risk_score(result, noai)
+
+    print(f'Stop scanning {bucket_name}')
+
     return bucket_name, result
 
 
-def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool, html: bool) -> None:
+def evaluate_s3_security(noai: bool, json: bool, html: bool) -> None:
     '''
         Runs different security checks on S3 buckets in the account and reports the results
 
         Args:
-            (bool) enc - scan encryption settings
-            (bool) pub - scan public access settings
             (bool) noai - disable evaluation with LLM
             (bool) json - output in JSON format
             (bool) html - output in HTML format
@@ -328,25 +343,19 @@ def evaluate_s3_security(enc: bool, pub: bool, noai: bool, json: bool, html: boo
     bucket_security = {}
 
     with ThreadPoolExecutor(max_workers=16) as executor:
-        futures = [executor.submit(scan_bucket, s3_client, bucket) for bucket in buckets]
-    
-    for future in tqdm(as_completed(futures), total=len(futures), desc='Scanning Buckets', unit='bucket'):
-        bucket_name, data = future.result()
-        bucket_security[bucket_name] = data
+        futures = [executor.submit(scan_bucket, s3_client, bucket, noai) for bucket in buckets]
+        total = len(futures)
+        done = set()
 
-    # for bucket in tqdm(buckets, desc='Scanning Buckets', unit='bucket'):
-    #     bucket_name = bucket['BucketName']
-    #     bucket_security[bucket_name] = bucket
-    #     bucket_security[bucket_name]['CreationDate'] = str(bucket['CreationDate'])
-    #     bucket_security[bucket_name]['Encryption'] = evaluate_s3_encryption(s3_client, bucket_name)
-    #     bucket_security[bucket_name]['PublicAccess'] = evaluate_s3_public_access(s3_client, bucket_name)
-    #     bucket_security[bucket_name]['Location'] = get_bucket_location(s3_client, bucket_name)
-    #     bucket_security[bucket_name]['Versioning'] = get_bucket_versioning(s3_client, bucket_name)
-
-    #     if not noai:
-    #         bucket_security[bucket_name]['PolicyEval'] = evaluate_bucket_policy(s3_client, bucket_name)
-
-    #     bucket_security[bucket_name]['Risk'] = risk.calculate_risk_score(bucket_security[bucket_name], noai)
+        with tqdm(total=total, desc='Scanning Buckets', unit='bucket') as pbar:
+            while len(done) < total:
+                done_now, _ = wait(futures, timeout=0.5, return_when=FIRST_COMPLETED)
+                newly_done = done_now - done
+                for future in newly_done:
+                    bucket_name, data = future.result()
+                    bucket_security[bucket_name] = data
+                pbar.update(len(newly_done))
+                done.update(newly_done)
 
     if json:
         output.output_json(bucket_security)
