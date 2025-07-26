@@ -305,8 +305,6 @@ def scan_bucket(s3: Client, bucket: str, noai: bool) -> tuple[str, dict]:
     '''
     bucket_name = bucket['BucketName']
 
-    print(f'Start scanning {bucket_name}')
-
     result = {
         'BucketName': bucket_name,
         'CreationDate': str(bucket['CreationDate']),
@@ -320,8 +318,6 @@ def scan_bucket(s3: Client, bucket: str, noai: bool) -> tuple[str, dict]:
         result['PolicyEval'] = evaluate_bucket_policy(s3, bucket_name)
 
     result['Risk'] = risk.calculate_risk_score(result, noai)
-
-    print(f'Stop scanning {bucket_name}')
 
     return bucket_name, result
 
