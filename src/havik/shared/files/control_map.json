@@ -1,0 +1,22 @@
+{
+    "AWS": {
+        "S3": {
+            "Encryption": {
+                "ControlID": "UEM-08",
+                "ControlTitle": "Storage Encryption"
+            },
+            "PublicAccess": {
+                "ControlID": "IAM-05",
+                "ControlTitle": "Least Privilege"
+            },
+            "Location": {
+                "ControlID": "DSP-19",
+                "ControlTitle": "Data Location"
+            },
+            "Versioning": {
+                "ControlID": "BCR-08",
+                "ControlTitle": "Backup"
+            }
+        }
+    }
+}

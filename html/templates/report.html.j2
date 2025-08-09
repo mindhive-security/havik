@@ -25,8 +25,8 @@
             {% endif %}
 
             {# Iterate all sub-dictionaries except known categories #}
-            {% for key, section in resource.items() if key not in ["PolicyEval", "Risk", "CreationDate", "Location", "BucketName"] and section is mapping %}
-                <h5>{{ key }}</h5>
+            {% for key, section in resource.items() if key not in ["PolicyEval", "Risk", "CreationDate", "Location", "BucketName", "Compliance"] and section is mapping %}
+                <h4>{{ key }}</h4>
                 <ul>
                     {% for subkey, value in section.items() %}
                         <li><strong>{{ subkey }}:</strong> {{ value }}</li>
@@ -35,7 +35,7 @@
             {% endfor %}
 
             {% if resource.get("PolicyEval") %}
-                <h5>Policy Evaluation</h5>
+                <h4>Policy Evaluation</h4>
                 <ul>
                     <li><strong>Status:</strong> {{ resource.PolicyEval.Status }}</li>
                     <li><strong>Reason:</strong>
@@ -45,7 +45,7 @@
             {% endif %}
 
             {% if resource.get("Risk") %}
-                <h5>Risk Assessment</h5>
+                <h4>Risk Assessment</h4>
                 <ul>
                     <li><strong>Score:</strong> {{ resource.Risk.Score }}</li>
                     <li><strong>Explanation:</strong>
@@ -53,6 +53,22 @@
                     </li>
                 </ul>
             {% endif %}
+
+           {% if resource.get("Compliance") %}
+                <h4>Compliance</h4>
+                {% for standard_name, checks in resource.Compliance.items() %}
+                <ul>
+                    <li><strong>Following controls from {{ standard_name }} applicable to the resource:</strong></li><br>
+                    <ul>
+                        {% for check_name, control in checks.items() %}
+                        <li><strong>{{ check_name }}:</strong>
+                            <pre>[{{ control.ControlID }}] {{ control.ControlTitle}}</pre>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </ul>
+                {% endfor %}
+            {% endif %} 
         </div>
     </div>
     {% endfor %}

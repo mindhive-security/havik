@@ -106,6 +106,7 @@ def calculate_risk_score(security_config: dict, noai: bool) -> int:
     risk_score += location_risk(security_config['Location'])
     risk_score += encryption_risk(security_config['Encryption'])
 
+    # TODO: Decide if this is needed at all, it is quite sofisticated evaluation with uncertain value.
     if not noai:
         risk_reason = agent.explain_bucket_risk(security_config, risk_score)
 

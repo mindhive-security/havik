@@ -26,7 +26,7 @@ from hashlib import md5
 from json import dumps, loads
 from tqdm import tqdm
 
-from havik.shared import output, llm, risk
+from havik.shared import output, llm, risk, compliance
 
 from .helpers import parse_arn, get_client
 
@@ -275,8 +275,7 @@ def evaluate_bucket_policy(s3: Client, bucket: str) -> dict:
         "- Otherwise, use best judgement.\n\n"
 
         Return ONLY a valid JSON object in this format:
-        Be VERY careful with special symbols like * and " in the output, so
-        the output is the properly renederable json string.
+        Never use special symbols like "*" in the output, it must be JSON serializable all the time.
         {{
         "Status": "Good" | "Bad",
         "Reason": "<short explanation without line breaks>" (must be correct JSON serializable, do not use any special symbols or quotes.)
@@ -318,6 +317,10 @@ def scan_bucket(s3: Client, bucket: str, noai: bool) -> tuple[str, dict]:
         result['PolicyEval'] = evaluate_bucket_policy(s3, bucket_name)
 
     result['Risk'] = risk.calculate_risk_score(result, noai)
+
+    compliance_checks = ['Encryption', 'PublicAccess', 'Location', 'Versioning']
+    result['Compliance'] = {'CSA_CCM': {}}
+    result['Compliance']['CSA_CCM'] = compliance.ccm_map('AWS', 'S3', compliance_checks)
 
     return bucket_name, result
 

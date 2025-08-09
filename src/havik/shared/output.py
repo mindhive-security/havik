@@ -62,12 +62,19 @@ def output_table(config: dict, title: str) -> None:
     console.print(table)
 
 
-def output_html(data):
-    env = Environment(loader=FileSystemLoader("html/templates"))
-    template = env.get_template("report.html.j2")
+def output_html(config: dict) -> None:
+    '''
+        Outputs the result as an HTML file
 
-    rendered_html = template.render(data=data)
+        Args: (dict) config - Configuration of resource
 
-    makedirs("html/reports", exist_ok=True)
-    with open("html/reports/index.html", "w") as f:
+        Returns: prints output into an HTML file
+    '''
+    env = Environment(loader=FileSystemLoader('html/templates'))
+    template = env.get_template('report.html.j2')
+
+    rendered_html = template.render(data=config)
+
+    makedirs('html/reports', exist_ok=True)
+    with open('html/reports/index.html', 'w') as f:
         f.write(rendered_html)
