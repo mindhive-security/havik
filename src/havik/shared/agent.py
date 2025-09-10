@@ -17,7 +17,7 @@ def explain_bucket_risk(config: dict, score: int) -> dict:
     '''
         This function uses LLM to evaluate risk score and gives recommendations.
         It uses LLM to define if the resource is compliant to top level regulations.
-        
+
         Args: (dict) config - resource configuration
               (int) score - risk score assigned by Risk module
 
