@@ -14,9 +14,6 @@
 '''
     This modules scans configuration settings of AWS S3 buckets
     in the current account.
-
-    Depending on the flags chosen in the main module, it scans
-    encryption or public access settings.
 '''
 from base64 import b64encode
 from boto3 import client as Client
@@ -305,7 +302,7 @@ def scan_bucket(s3: Client, bucket: str, noai: bool) -> tuple[str, dict]:
     bucket_name = bucket['BucketName']
 
     result = {
-        'BucketName': bucket_name,
+        'ResourceName': bucket_name,
         'CreationDate': str(bucket['CreationDate']),
         'Encryption': evaluate_s3_encryption(s3, bucket_name),
         'PublicAccess': evaluate_s3_public_access(s3, bucket_name),

@@ -25,7 +25,7 @@
             {% endif %}
 
             {# Iterate all sub-dictionaries except known categories #}
-            {% for key, section in resource.items() if key not in ["PolicyEval", "Risk", "CreationDate", "Location", "BucketName", "Compliance"] and section is mapping %}
+            {% for key, section in resource.items() if key not in ["PolicyEval", "Risk", "CreationDate", "Location", "ResourceName", "Compliance"] and section is mapping %}
                 <h4>{{ key }}</h4>
                 <ul>
                     {% for subkey, value in section.items() %}
