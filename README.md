@@ -1,14 +1,15 @@
 #  Havik
 
-**Havik** is a modular CLI tool designed to scan and analyze security configurations in public cloud environments. It currently supports AWS, Azure and GCP. The tool helps identify weak spots such as missing encryption, overly permissive access, and insecure IAM policies — especially where native tools like AWS Security Hub fall short.
+**Havik** is a modular CLI tool designed to scan and analyze security configurations in public cloud environments. It currently supports AWS, Azure and GCP. The tool helps identify weak spots such as missing encryption, overly permissive access, and insecure IAM policies — especially where native tools like AWS Security Hub fall short. The tool generates reports in CLI, JSON and HTML. It also maps the configurations to CSA CCM controls.
 
 ## ✨ Features
 
 - 🔐 Encryption checks (S3/GCS buckets)
 - 🌍 Public access detection
 - 🔎 IAM policy analysis using LLMs (for AWS S3)
-- 📊 Output in human-readable tables or JSON
+- 📊 Output in human-readable tables or JSON and HTML
 - ⚙️ Modular structure, ready to scale across clouds and services
+- Maps to CSA CCM controls
 
 ## 🚀 Installation
 
@@ -33,21 +34,22 @@ havik -h
 ### AWS S3
 
 ```bash
-havik aws s3 -e           # Encryption check
-havik aws s3 -p           # Public access check and policy analysis
-havik aws s3 -e -p --json # Combined check with JSON output
+havik aws s3 # Checks s3 security configuration
+havik aws s3 --json # JSON output
+havik aws s3 --html # HTML output
+havik aws s3 --no-ai # Do not use features based on LLM
 ```
 
 ### GCP Storage
 
 ```bash
-havik gcp storage -e -p   # Encryption + public access
+havik gcp storage # Security configuration of GCP bucket
 ```
 
 ### Azure Storage Account
 
 ```bash
-havik az storage -e -p # Encryption + public access
+havik az storage # Security configuration of Azure storage account
 ```
 
 ### 🔍 AI-Assisted IAM Policy Evaluation (Optional)
@@ -101,4 +103,3 @@ This is an early-stage project. All contributions, issue reports, and suggestion
 ## 🌍 Vision
 
 Havik Scanner aims to be a vendor-agnostic, open-source solution that complements native cloud security tooling — especially for European companies with strong compliance needs.
-
