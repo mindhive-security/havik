@@ -52,6 +52,10 @@ havik gcp storage # Security configuration of GCP bucket
 havik az storage # Security configuration of Azure storage account
 ```
 
+### Reporting
+
+With --html flag the report is produced locally in html/reports/index.html. This report contains all information about the resource configuration and provides mapping to CSA Cloud Controls Matrix (CCM) controls. Later this feature will be extended to generic DORA paragraphs and other regulations articles. This mapping will be done on best approach combining static mapping and LLM evaluation.
+
 ### 🔍 AI-Assisted IAM Policy Evaluation (Optional)
 
 This tool can evaluate bucket IAM policies using a local LLM (e.g., Mistral) for heuristic risk analysis. This feature is **optional** and currenty only works if:
