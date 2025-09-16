@@ -167,6 +167,23 @@ def get_bucket_versioning(s3: Client, bucket: str) -> dict:
     return bucket_versioning
 
 
+def get_bucket_tagging(s3: Client, bucket: str) -> bool:
+    '''
+        Checks the tags on the bucket.
+        Return False if no tags present.
+
+       Args: (boto3.client) s3 - S3 client
+             (str) bucket - the name of the bucket to scan 
+       Returns: (bool) - if False, no tags present on the bucket.
+    '''
+    try:
+        bucket_tagging = s3.get_bucket_tagging(Bucket=bucket)
+    except s3.NoSuchTagSet:
+        return False
+    
+    return True
+
+
 # Public access settings
 def get_bucket_public_configuration(s3: Client, bucket: str) -> bool:
     '''
@@ -229,12 +246,15 @@ def evaluate_s3_encryption(s3: Client, bucket: str) -> dict:
         encryption_key = key
         key_location = bucket_location
 
+    tagging_status = get_bucket_tagging(s3, bucket)
+
     return {
         'Algorithm': encryption_algorithm,
         'Key': encryption_key,
         'KeyLocation': key_location,
         'TLS': tls_status,
-        'SSE-C': sse_c_status
+        'SSE-C': sse_c_status,
+        'Tagging': tagging_status
     }
 
 
