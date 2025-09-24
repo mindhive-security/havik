@@ -15,3 +15,60 @@
     This modules scans configuration settings of AWS DynamoDB tables
     in the current account.
 '''
+from boto3 import client as Client
+from botocore import exceptions
+from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
+from json import dumps, loads
+from tqdm import tqdm
+
+from .helpers import parse_arn, get_client
+
+from havik.shared import output, llm, risk, compliance
+
+
+def list_tables():
+    pass
+
+
+def scan_table():
+    pass
+
+
+def evaluate_ddb_security(noai: bool, json: bool, html: bool) -> None:
+    '''
+        Runs different security checks on DynamoDB tables in the account and reports the results
+
+        Args:
+            (bool) noai - disable evaluation with LLM
+            (bool) json - output in JSON format
+            (bool) html - output in HTML format
+        Returns: None
+    '''
+    ddb_client = get_client('dynamodb')
+
+    tables = list_tables(ddb_client)
+
+    table_security = {}
+
+    with ThreadPoolExecutor(max_workers=16) as executor:
+        futures = [executor.submit(scan_table, ddb_client, table, noai) for table in tables]
+        total = len(futures)
+        done = set()
+
+        with tqdm(total=total, desc='Scanning Tables', unit='table') as pbar:
+            while len(done) < total:
+                done_now, _ = wait(futures, timeout=0.5, return_when=FIRST_COMPLETED)
+                newly_done = done_now - done
+                for future in newly_done:
+                    table_name, data = future.result()
+                    table_security[table_name] = data
+                pbar.update(len(newly_done))
+                done.update(newly_done)
+
+    if json:
+        output.output_json(table_security)
+    elif html:
+        output.output_html(table_security)
+    else:
+        title = 'DynamoDB Tables Security Scan Results'
+        output.output_table(table_security, title)

@@ -173,14 +173,14 @@ def get_bucket_tagging(s3: Client, bucket: str) -> bool:
         Return False if no tags present.
 
        Args: (boto3.client) s3 - S3 client
-             (str) bucket - the name of the bucket to scan 
+             (str) bucket - the name of the bucket to scan
        Returns: (bool) - if False, no tags present on the bucket.
     '''
     try:
         bucket_tagging = s3.get_bucket_tagging(Bucket=bucket)
     except s3.NoSuchTagSet:
         return False
-    
+
     return True
 
 
