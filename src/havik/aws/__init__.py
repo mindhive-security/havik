@@ -1,1 +1,1 @@
-from . import s3
+from . import s3, dynamodb

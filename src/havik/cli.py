@@ -31,7 +31,7 @@ from havik import aws
 from havik import gcp
 from havik import az
 
-SUPPORTED_SERVICES_AWS = ['s3']
+SUPPORTED_SERVICES_AWS = ['s3', 'dynamodb']
 SUPPORTED_SERVICES_GCP = ['storage']
 SUPPORTED_SERVICES_AZ = ['storage']
 
@@ -65,6 +65,11 @@ def main() -> None:
     if args.provider == 'aws':
         if args.service == 's3':
             aws.s3.evaluate_s3_security(
+                noai=args.no_ai,
+                json=args.json,
+                html=args.html)
+        elif args.service == 'dynamodb':
+            aws.dynamodb.evaluate_ddb_security(
                 noai=args.no_ai,
                 json=args.json,
                 html=args.html)

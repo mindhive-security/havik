@@ -26,12 +26,18 @@ from .helpers import parse_arn, get_client
 from havik.shared import output, llm, risk, compliance
 
 
-def list_tables():
-    pass
+def list_tables(ddb_client):
+    response = ddb_client.list_tables()
+    tables = [{'TableName': table, 'CreationDate': ''}
+               for table in response['TableNames']]
+    
+    print(tables)
+
+    return tables
 
 
-def scan_table():
-    pass
+def scan_table(ddb_client: Client, table: str, noai: bool):
+    return table['TableName'], {}
 
 
 def evaluate_ddb_security(noai: bool, json: bool, html: bool) -> None:
