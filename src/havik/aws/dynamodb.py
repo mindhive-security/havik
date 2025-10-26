@@ -29,15 +29,28 @@ from havik.shared import output, llm, risk, compliance
 def list_tables(ddb_client):
     response = ddb_client.list_tables()
     tables = [{'TableName': table, 'CreationDate': ''}
-               for table in response['TableNames']]
-    
+              for table in response['TableNames']]
+
     print(tables)
 
     return tables
 
 
+def get_creation_date(ddb_client, table_name):
+    response = ddb_client.describe_table(
+        TableName=table_name
+    )
+
+    return response['Table']['CreationDateTime']
+
+
 def scan_table(ddb_client: Client, table: str, noai: bool):
-    return table['TableName'], {}
+    table_name = table['TableName']
+    result = {
+        'ResourceName': table_name,
+        'CreationDate': get_creation_date(ddb_client, table_name)
+    }
+    return table_name, result
 
 
 def evaluate_ddb_security(noai: bool, json: bool, html: bool) -> None:
