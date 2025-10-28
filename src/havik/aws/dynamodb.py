@@ -36,28 +36,22 @@ def list_tables(ddb_client):
     return tables
 
 
-def get_encryption(ddb_client, table_name):
+def get_table_description(ddb_client, table_name):
     response = ddb_client.describe_table(
         TableName=table_name
     )
 
-    return response['Table']['SSEDescription']['Status']
-
-
-def get_creation_date(ddb_client, table_name):
-    response = ddb_client.describe_table(
-        TableName=table_name
-    )
-
-    return response['Table']['CreationDateTime']
+    return response['Table']
 
 
 def scan_table(ddb_client: Client, table: str, noai: bool):
     table_name = table['TableName']
+    table_desc = get_table_description(ddb_client, table_name)['Table']
+
     result = {
         'ResourceName': table_name,
-        'CreationDate': get_creation_date(ddb_client, table_name),
-        'Encryption': get_encryption(ddb_client, table_name)
+        'CreationDate': table_desc['CreationDateTime'],
+        'Encryption': table_desc['SSEDescription']['Status']
     }
     return table_name, result
 
