@@ -26,17 +26,28 @@ from .helpers import parse_arn, get_client
 from havik.shared import output, llm, risk, compliance
 
 
-def list_tables(ddb_client):
+def list_tables(ddb_client: Client) -> list:
+    '''
+        This function list all DynamoDB tables in the account.
+        
+        Args: (boto3.Client) ddb_client - boto3 DynamoDB client
+        Returns: (list) tables - list of all DynamoDB tables in the account
+    '''
     response = ddb_client.list_tables()
-    tables = [{'TableName': table, 'CreationDate': ''}
-              for table in response['TableNames']]
-
-    print(tables)
+    tables = response['TableNames']
 
     return tables
 
 
-def get_table_description(ddb_client, table_name):
+def get_table_description(ddb_client: Client , table_name: str) -> dict:
+    '''
+        This function get the table description in a dictionary.
+
+        Args: (boto3.Client) ddb_client - boto3 DynamoDB client
+              (str) table_name - The name of the table
+
+        Returns: (dict) response - Response from DynamoDB API containing table description
+    '''
     response = ddb_client.describe_table(
         TableName=table_name
     )
@@ -44,8 +55,17 @@ def get_table_description(ddb_client, table_name):
     return response['Table']
 
 
-def scan_table(ddb_client: Client, table: str, noai: bool):
-    table_name = table['TableName']
+def scan_table(ddb_client: Client, table_name: str, noai: bool) -> str, dict:
+    '''
+        This function scans security configuration of the DynamoDB table.
+
+        Args: (boto3.Client) ddb_client - boto3 DynamoDB client
+              (str) table_name - The name of the table
+              (bool) noai - Flag disabling evaluation by AI
+
+        Returns: (str) table_name - The name of the table
+                 (dict) response - Response from DynamoDB API containing table description
+    '''
     table_desc = get_table_description(ddb_client, table_name)['Table']
 
     result = {
@@ -53,6 +73,7 @@ def scan_table(ddb_client: Client, table: str, noai: bool):
         'CreationDate': table_desc['CreationDateTime'],
         'Encryption': table_desc['SSEDescription']['Status']
     }
+
     return table_name, result
 
 
@@ -73,7 +94,7 @@ def evaluate_ddb_security(noai: bool, json: bool, html: bool) -> None:
     table_security = {}
 
     with ThreadPoolExecutor(max_workers=16) as executor:
-        futures = [executor.submit(scan_table, ddb_client, table, noai) for table in tables]
+        futures = [executor.submit(scan_table, ddb_client, table_name, noai) for table_name in tables]
         total = len(futures)
         done = set()
 
