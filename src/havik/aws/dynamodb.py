@@ -55,7 +55,7 @@ def get_table_description(ddb_client: Client , table_name: str) -> dict:
     return response['Table']
 
 
-def scan_table(ddb_client: Client, table_name: str, noai: bool) -> Tuple[str, dict]:
+def scan_table(ddb_client: Client, table_name: str, noai: bool) -> tuple[str, dict]:
     '''
         This function scans security configuration of the DynamoDB table.
 
