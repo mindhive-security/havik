@@ -16,15 +16,40 @@ BUCKET_NAME = 'test-bucket'
 def create_bucket():
     with mock_aws():
         s3 = client('s3', region_name=DEFAULT_REGION)
-        
+
         s3.create_bucket(
             Bucket=BUCKET_NAME,
             CreateBucketConfiguration={
                 'LocationConstraint': DEFAULT_REGION
             }
         )
-        
+
         yield s3, BUCKET_NAME
+
+
+@pytest.fixture(scope='session')
+def create_bucket_no_ecryption():
+    with mock_aws():
+        s3 = client('s3', region_name=DEFAULT_REGION)
+
+        s3.create_bucket(
+            Bucket=f'{BUCKET_NAME}-2',
+            CreateBucketConfiguration={
+                'LocationConstraint': DEFAULT_REGION
+            }
+        )
+
+        yield s3, BUCKET_NAME
+
+
+def test_get_bucket_encryption_no_config(create_bucket_no_ecryption):
+    '''
+        Tests that default bucket doesn't have encryption configuration
+    '''
+    s3, bucket_name = create_bucket_no_ecryption
+
+    result = get_bucket_encryption(s3, bucket_name)
+    assert result is None
 
 
 # Encryption settings
@@ -47,22 +72,18 @@ def test_get_bucket_encryption(create_bucket):
     assert result['SSEAlgorithm'] == 'AES256'
 
 
-def test_get_bucket_encryption_no_config(create_bucket):
-    '''
-        Tests that default bucket doesn't have encryption configuration
-    '''
-    s3, bucket_name = create_bucket
-
-    result = get_bucket_encryption(s3, bucket_name)
-    assert result is None
-
-
 def test_check_sse_c_allowed(create_bucket):
     # TODO: rework to obtain meaningful results without moto
     s3, bucket_name = create_bucket
 
     result = check_sse_c_allowed(s3, bucket_name)
     assert result is False  # Moto does not support SSE-C
+
+
+def test_check_tls_not_enforced(create_bucket):
+    s3, bucket_name = create_bucket
+
+    assert check_tls_enforced(s3, bucket_name) is False
 
 
 def test_check_tls_enforced(create_bucket):
@@ -85,12 +106,6 @@ def test_check_tls_enforced(create_bucket):
     s3.put_bucket_policy(Bucket=bucket_name, Policy=dumps(bucket_policy))
 
     assert check_tls_enforced(s3, bucket_name) is True
-
-
-def test_check_tls_not_enforced(create_bucket):
-    s3, bucket_name = create_bucket
-
-    assert check_tls_enforced(s3, bucket_name) is False
 
 
 def test_get_bucket_location(create_bucket):
@@ -141,7 +156,7 @@ def test_get_bucket_public_configuration(create_bucket):
 
 
 @patch('havik.shared.llm.ask_model')
-def test_evaluate_bucket_policy(mock_ask_model):
+def test_evaluate_bucket_policy(mock_ask_model, create_bucket):
     s3, bucket_name = create_bucket
 
     test_policy = {
