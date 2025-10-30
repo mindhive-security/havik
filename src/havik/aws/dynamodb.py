@@ -29,7 +29,7 @@ from havik.shared import output, llm, risk, compliance
 def list_tables(ddb_client: Client) -> list:
     '''
         This function list all DynamoDB tables in the account.
-        
+
         Args: (boto3.Client) ddb_client - boto3 DynamoDB client
         Returns: (list) tables - list of all DynamoDB tables in the account
     '''
@@ -39,7 +39,7 @@ def list_tables(ddb_client: Client) -> list:
     return tables
 
 
-def get_table_description(ddb_client: Client , table_name: str) -> dict:
+def get_table_description(ddb_client: Client, table_name: str) -> dict:
     '''
         This function get the table description in a dictionary.
 

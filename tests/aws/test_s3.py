@@ -1,3 +1,5 @@
+import pytest
+
 from boto3 import client
 from botocore import exceptions
 from json import dumps
@@ -7,19 +9,28 @@ from unittest.mock import patch
 from havik.aws.s3 import get_bucket_encryption, check_sse_c_allowed, check_tls_enforced, get_bucket_location, get_key_location, get_bucket_public_configuration, evaluate_bucket_policy
 
 DEFAULT_REGION = 'eu-central-1'
-s3 = client('s3')
+BUCKET_NAME = 'test-bucket'
+
+
+@pytest.fixture(scope='session')
+def create_bucket():
+    with mock_aws():
+        s3 = client('s3', region_name=DEFAULT_REGION)
+        
+        s3.create_bucket(
+            Bucket=BUCKET_NAME,
+            CreateBucketConfiguration={
+                'LocationConstraint': DEFAULT_REGION
+            }
+        )
+        
+        yield s3, BUCKET_NAME
 
 
 # Encryption settings
-@mock_aws
-def test_get_bucket_encryption():
-    bucket_name = 'test-bucket'
-    s3.create_bucket(
-        Bucket=bucket_name,
-        CreateBucketConfiguration={
-            'LocationConstraint': DEFAULT_REGION
-        }
-    )
+def test_get_bucket_encryption(create_bucket):
+    s3, bucket_name = create_bucket
+
     encryption_config = {
         'Rules': [
             {
@@ -36,47 +47,27 @@ def test_get_bucket_encryption():
     assert result['SSEAlgorithm'] == 'AES256'
 
 
-@mock_aws
-def test_get_bucket_encryption_no_config():
+def test_get_bucket_encryption_no_config(create_bucket):
     '''
         Tests that default bucket doesn't have encryption configuration
     '''
-    bucket_name = 'test-bucket'
-    s3.create_bucket(
-        Bucket=bucket_name,
-        CreateBucketConfiguration={
-            'LocationConstraint': DEFAULT_REGION
-        }
-    )
+    s3, bucket_name = create_bucket
 
     result = get_bucket_encryption(s3, bucket_name)
     assert result is None
 
 
-@mock_aws
-def test_check_sse_c_allowed():
+def test_check_sse_c_allowed(create_bucket):
     # TODO: rework to obtain meaningful results without moto
-    bucket_name = 'test-bucket'
-    s3.create_bucket(
-        Bucket=bucket_name,
-        CreateBucketConfiguration={
-            'LocationConstraint': DEFAULT_REGION
-        }
-    )
+    s3, bucket_name = create_bucket
 
     result = check_sse_c_allowed(s3, bucket_name)
     assert result is False  # Moto does not support SSE-C
 
 
-@mock_aws
-def test_check_tls_enforced():
-    bucket_name = 'test-bucket'
-    s3.create_bucket(
-        Bucket=bucket_name,
-        CreateBucketConfiguration={
-            'LocationConstraint': DEFAULT_REGION
-        }
-    )
+def test_check_tls_enforced(create_bucket):
+    s3, bucket_name = create_bucket
+
     bucket_policy = {
         'Version': '2012-10-17',
         'Statement': [
@@ -96,41 +87,21 @@ def test_check_tls_enforced():
     assert check_tls_enforced(s3, bucket_name) is True
 
 
-@mock_aws
-def test_check_tls_not_enforced():
-    bucket_name = 'test-bucket'
-    s3.create_bucket(
-        Bucket=bucket_name,
-        CreateBucketConfiguration={
-            'LocationConstraint': DEFAULT_REGION
-        }
-    )
+def test_check_tls_not_enforced(create_bucket):
+    s3, bucket_name = create_bucket
 
     assert check_tls_enforced(s3, bucket_name) is False
 
 
-@mock_aws
-def test_get_bucket_location():
-    bucket_name = 'test-bucket'
-    s3.create_bucket(
-        Bucket=bucket_name,
-        CreateBucketConfiguration={
-            'LocationConstraint': DEFAULT_REGION
-        }
-    )
+def test_get_bucket_location(create_bucket):
+    s3, bucket_name = create_bucket
 
     assert get_bucket_location(s3, bucket_name) == DEFAULT_REGION
 
 
-@mock_aws
-def test_get_key_location():
-    bucket_name = 'test-bucket'
-    s3.create_bucket(
-        Bucket=bucket_name,
-        CreateBucketConfiguration={
-            'LocationConstraint': DEFAULT_REGION
-        }
-    )
+def test_get_key_location(create_bucket):
+    s3, bucket_name = create_bucket
+
     encryption_config = {
         'Rules': [
             {
@@ -155,16 +126,10 @@ def test_get_key_location():
 
 
 # Public access settings
-@mock_aws
-def test_get_bucket_public_configuration():
+def test_get_bucket_public_configuration(create_bucket):
     # TODO: rework to obtain meaningful results without moto
     bucket_name = 'test-bucket'
-    s3.create_bucket(
-        Bucket=bucket_name,
-        CreateBucketConfiguration={
-            'LocationConstraint': DEFAULT_REGION
-        }
-    )
+    s3, bucket_name = create_bucket
 
     try:
         result = get_bucket_public_configuration(s3, bucket_name)
@@ -175,16 +140,9 @@ def test_get_bucket_public_configuration():
     assert result == 'Blocked'
 
 
-@mock_aws
 @patch('havik.shared.llm.ask_model')
 def test_evaluate_bucket_policy(mock_ask_model):
-    s3 = client('s3', region_name='eu-central-1')
-    bucket_name = 'example-bucket'
-    s3.create_bucket(
-        Bucket=bucket_name,
-        CreateBucketConfiguration={
-            'LocationConstraint': DEFAULT_REGION
-        })
+    s3, bucket_name = create_bucket
 
     test_policy = {
         'Version': '2012-10-17',
