@@ -41,7 +41,7 @@ def list_tables(ddb_client: Client) -> list:
 
 def get_table_description(ddb_client: Client, table_name: str) -> dict:
     '''
-        This function get the table description in a dictionary.
+        This function gets the table description in a dictionary.
 
         Args: (boto3.Client) ddb_client - boto3 DynamoDB client
               (str) table_name - The name of the table
@@ -53,6 +53,22 @@ def get_table_description(ddb_client: Client, table_name: str) -> dict:
     )
 
     return response['Table']
+
+
+def get_pitr_status(ddb_client: Client, table_name: str) -> str:
+    '''
+        This function gets the status of continuous backups (PITR).
+
+        Args: (boto3.Client) ddb_client - boto3 DynamoDB client
+              (str) table_name - The name of the table
+
+        Returns: (str) Status of PITR
+    '''
+    response = ddb_client.describe_continuous_backups(
+        TableName=table_name
+    )
+
+    return response['ContinuousBackupsDescription']['PointInTimeRecoveryDescription']['PointInTimeRecoveryStatus']
 
 
 def scan_table(ddb_client: Client, table_name: str, noai: bool) -> tuple[str, dict]:
@@ -71,7 +87,8 @@ def scan_table(ddb_client: Client, table_name: str, noai: bool) -> tuple[str, di
     result = {
         'ResourceName': table_name,
         'CreationDate': table_desc['CreationDateTime'],
-        'Encryption': table_desc['SSEDescription']['Status']
+        'Encryption': table_desc['SSEDescription']['Status'],
+        'BackupStatus': get_pitr_status(ddb_client, table_name)
     }
 
     return table_name, result

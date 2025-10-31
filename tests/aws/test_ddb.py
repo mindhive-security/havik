@@ -45,3 +45,25 @@ def test_list_tables(create_table):
 
     result = list_tables(ddb)
     assert result == [table_name]
+
+
+def test_get_pitr_status_disabled(create_table):
+    ddb, table_name = create_table
+
+    result = get_pitr_status(ddb, table_name)
+    assert result == 'DISABLED'
+
+
+def test_get_pitr_status_enabled(create_table):
+    ddb, table_name = create_table
+
+    ddb.update_continuous_backups(
+        TableName=table_name,
+        PointInTimeRecoverySpecification={
+            'PointInTimeRecoveryEnabled': True,
+            'RecoveryPeriodInDays': 123
+        }
+    )
+
+    result = get_pitr_status(ddb, table_name)
+    assert result == 'ENABLED'
