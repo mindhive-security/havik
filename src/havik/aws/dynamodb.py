@@ -19,11 +19,15 @@ from boto3 import client as Client
 from botocore import exceptions
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 from json import dumps, loads
+from os import getenv
 from tqdm import tqdm
 
-from .helpers import parse_arn, get_client
+from .helpers import get_client, get_arn_from_name, get_aws_account_id, get_aws_region
 
 from havik.shared import output, llm, risk, compliance
+
+
+DEFAULT_REGION = getenv('AWS_DEFAULT_REGION', 'eu-central-1')
 
 
 def list_tables(ddb_client: Client) -> list:
@@ -71,6 +75,53 @@ def get_pitr_status(ddb_client: Client, table_name: str) -> str:
     return response['ContinuousBackupsDescription']['PointInTimeRecoveryDescription']['PointInTimeRecoveryStatus']
 
 
+def evaluate_table_policy(ddb_client: Client, table_name: str):
+    '''
+        This functions evaluates resource-based policy of the table.
+
+        Args: (boto3.Client) ddb_client - boto3 DynamoDB client
+              (str) table_name - The name of the table
+    '''
+    table_arn = get_arn_from_name('dynamodb', DEFAULT_REGION, get_aws_account_id(), f'table/{table_name}')
+
+    try:
+        response = ddb_client.get_resource_policy(
+            ResourceArn=table_arn
+        )
+    except ddb_client.exceptions.PolicyNotFoundException as err:
+        return {}
+
+    policy = loads(response['Policy'])
+
+    prompt = \
+        f'''
+    You are an automated security AWS IAM policy evaluator.
+    "Rules:\n"
+    "- If the policy allows public access (Principal: *) and has no limiting conditions, mark as Bad.\n"
+    "- If policy allows all actions (Action: dynamodb:*), mark as Bad.\n"
+    "- If there are wilcards in policy and no conditions, mark as Bad.\n"
+    "- If cross-account or cross-service access is allowed and no conditions limiting it on SourceArn, SourceAccount or OrgId, mark as Bad.\n"
+    "- If only internal actions (like logging), mark as Good.\n"
+    "- Otherwise, use best judgement.\n\n"
+
+    Return ONLY a valid JSON object in this format:
+    Never use special symbols like "*" in the output, it must be JSON serializable all the time.
+    {{
+    "Status": "Good" | "Bad",
+    "Reason": "<short explanation without line breaks>" (must be correct JSON serializable, do not use any special symbols or quotes.)
+    }}
+
+    Evaluate the following AWS IAM DynamoDB resource policy:
+    {dumps(policy, indent=2)}
+    '''
+    model_response = llm.ask_model(prompt)
+
+    return {
+        'Status': model_response['Status'],
+        'Reason': model_response['Reason']
+    }
+
+
 def scan_table(ddb_client: Client, table_name: str, noai: bool) -> tuple[str, dict]:
     '''
         This function scans security configuration of the DynamoDB table.
@@ -82,14 +133,17 @@ def scan_table(ddb_client: Client, table_name: str, noai: bool) -> tuple[str, di
         Returns: (str) table_name - The name of the table
                  (dict) response - Response from DynamoDB API containing table description
     '''
-    table_desc = get_table_description(ddb_client, table_name)['Table']
+    table_desc = get_table_description(ddb_client, table_name)
 
     result = {
         'ResourceName': table_name,
         'CreationDate': table_desc['CreationDateTime'],
-        'Encryption': table_desc['SSEDescription']['Status'],
+        'Encryption': table_desc.get('SSEDescription', {}).get('Status'),
         'BackupStatus': get_pitr_status(ddb_client, table_name)
     }
+
+    if not noai:
+        result['PolicyEval'] = evaluate_table_policy(ddb_client, table_name)
 
     return table_name, result
 

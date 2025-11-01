@@ -14,7 +14,7 @@
 '''
     Here stored useful functions, called by other modules
 '''
-from boto3 import client
+from boto3 import client, Session
 
 
 def parse_arn(arn: str) -> list:
@@ -29,3 +29,19 @@ def parse_arn(arn: str) -> list:
 
 def get_client(service: str, region_name: str = 'eu-central-1'):
     return client(service, region_name=region_name)
+
+
+def get_arn_from_name(service: str, region: str, account_id: str, resource_id: str) -> str:
+    return f'arn:aws:{service}:{region}:{account_id}:{resource_id}'
+
+
+def get_aws_account_id() -> str:
+    sts = client('sts')
+
+    return sts.get_caller_identity()['Account']
+
+
+def get_aws_region():
+    session = Session()
+
+    return session.region_name
