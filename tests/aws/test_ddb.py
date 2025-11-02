@@ -67,3 +67,10 @@ def test_get_pitr_status_enabled(create_table):
 
     result = get_pitr_status(ddb, table_name)
     assert result == 'ENABLED'
+
+
+def test_no_encryption(create_table):
+    ddb, table_name = create_table
+
+    _, result = scan_table(ddb, table_name, False)
+    assert result['Encryption'] == None
