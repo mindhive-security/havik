@@ -45,3 +45,7 @@ def get_aws_region():
     session = Session()
 
     return session.region_name
+
+
+def get_region_from_arn(arn: str) -> str:
+    return parse_arn(arn)[3]

@@ -22,7 +22,7 @@ from json import dumps, loads
 from os import getenv
 from tqdm import tqdm
 
-from .helpers import get_client, get_arn_from_name, get_aws_account_id, get_aws_region
+from .helpers import get_client, get_arn_from_name, get_aws_account_id, get_aws_region, get_region_from_arn
 
 from havik.shared import output, llm, risk, compliance
 
@@ -134,12 +134,14 @@ def scan_table(ddb_client: Client, table_name: str, noai: bool) -> tuple[str, di
                  (dict) response - Response from DynamoDB API containing table description
     '''
     table_desc = get_table_description(ddb_client, table_name)
+    table_arn = table_desc['TableArn']
 
     result = {
         'ResourceName': table_name,
         'CreationDate': table_desc['CreationDateTime'],
         'Encryption': table_desc.get('SSEDescription', {}).get('Status'),
-        'BackupStatus': get_pitr_status(ddb_client, table_name)
+        'BackupStatus': get_pitr_status(ddb_client, table_name),
+        'Location': get_region_from_arn(table_arn)
     }
 
     if not noai:
