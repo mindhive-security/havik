@@ -72,5 +72,6 @@ def test_get_pitr_status_enabled(create_table):
 def test_no_encryption(create_table):
     ddb, table_name = create_table
 
-    _, result = scan_table(ddb, table_name, False)
-    assert result['Encryption'] is None
+    _, result = scan_table(ddb, table_name, False, 'AWS', 'dynamodb')
+
+    assert result['Encryption']['Status'] is None
