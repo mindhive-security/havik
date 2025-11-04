@@ -161,7 +161,6 @@ def scan_table(ddb_client: Client, table_name: str, noai: bool, provider: str, s
         'Encryption': evaluate_dynamodb_encryption(table_desc),
         'BackupStatus': get_pitr_status(ddb_client, table_name),
         'Location': get_region_from_arn(table_arn),
-        'PublicAccess': {'Status': ''}
     }
 
     if not noai:
@@ -191,7 +190,8 @@ def evaluate_dynamodb_security(noai: bool, json: bool, html: bool, provider: str
     table_security = {}
 
     with ThreadPoolExecutor(max_workers=16) as executor:
-        futures = [executor.submit(scan_table, ddb_client, table_name, noai, provider, service) for table_name in tables]
+        futures = [executor.submit(scan_table, ddb_client, table_name, noai, provider, service)
+                   for table_name in tables]
         total = len(futures)
         done = set()
 

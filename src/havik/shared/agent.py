@@ -26,7 +26,7 @@ def explain_risk(config: dict, score: int, provider: str, service: str) -> dict:
     '''
     resource_name = config['ResourceName']
     encryption = config['Encryption']
-    public = config['PublicAccess']['Status']
+    public = config.get('PublicAccess', {}).get('Status')
     policy_status = config['PolicyEval']['Status']
     policy_reason = config['PolicyEval']['Reason']
     creation_date = config['CreationDate']
