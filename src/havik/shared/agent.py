@@ -13,13 +13,14 @@ llm = OllamaLLM(
 )
 
 
-def explain_bucket_risk(config: dict, score: int) -> dict:
+def explain_bucket_risk(config: dict, score: int, service_name: str) -> dict:
     '''
         This function uses LLM to evaluate risk score and gives recommendations.
         It uses LLM to define if the resource is compliant to top level regulations.
 
         Args: (dict) config - resource configuration
               (int) score - risk score assigned by Risk module
+              (str) service_name - the name of the service where the resource belongs to
 
         Returns: (dict) response - Response from the model
     '''
@@ -30,6 +31,7 @@ def explain_bucket_risk(config: dict, score: int) -> dict:
     policy_reason = config['PolicyEval']['Reason']
     creation_date = config['CreationDate']
     location = config['Location']
+    service = service_name
 
     extra_context = '''
 DORA (Digital Operational Resilience Act) is an EU regulation that requires financial institutions to implement secure ICT risk management practices, including data encryption, secure access policies, and clear accountability for third-party service providers.
@@ -38,7 +40,7 @@ DORA (Digital Operational Resilience Act) is an EU regulation that requires fina
     prompt = PromptTemplate.from_template(f'''
 You are a cloud security expert.
 
-A cloud resource named "{resource_name}" has a calculated risk score of {score} out of 100.
+A cloud resource in service {service} named "{resource_name}" has a calculated risk score of {score} out of 100.
 
 Here is the configuration:
 - Encryption algorithm: {encryption.get('Algorithm')}
@@ -60,8 +62,8 @@ Please:
 4. Define if the configuration compliant to DORA, GDPR, CIS, NIST 800-53 and ISO 27018/27001
 
 Rules:
-SSE-C is bad an should not be used.
-TLS must be enforced.
+SSE-C is bad an should not be used (only for S3 buckets)
+TLS must be enforced (decide on service context).
 Resource and key must reside in Europe.
 Algorithm should be secure, e.g. AES-256
 Public access must be blocked.

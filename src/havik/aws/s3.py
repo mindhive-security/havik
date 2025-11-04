@@ -28,6 +28,9 @@ from havik.shared import output, llm, risk, compliance
 from .helpers import parse_arn, get_client
 
 
+SERVICE_NAME = "S3"
+
+
 # Encryption settings
 def get_bucket_encryption(s3: Client, bucket: str) -> dict:
     '''
@@ -177,7 +180,7 @@ def get_bucket_tagging(s3: Client, bucket: str) -> bool:
        Returns: (bool) - if False, no tags present on the bucket.
     '''
     try:
-        bucket_tagging = s3.get_bucket_tagging(Bucket=bucket)
+        s3.get_bucket_tagging(Bucket=bucket)
     except s3.NoSuchTagSet:
         return False
 
@@ -246,15 +249,12 @@ def evaluate_s3_encryption(s3: Client, bucket: str) -> dict:
         encryption_key = key
         key_location = bucket_location
 
-    tagging_status = get_bucket_tagging(s3, bucket)
-
     return {
         'Algorithm': encryption_algorithm,
         'Key': encryption_key,
         'KeyLocation': key_location,
         'TLS': tls_status,
-        'SSE-C': sse_c_status,
-        'Tagging': tagging_status
+        'SSE-C': sse_c_status
     }
 
 
@@ -328,6 +328,7 @@ def scan_bucket(s3: Client, bucket: str, noai: bool) -> tuple[str, dict]:
         'PublicAccess': evaluate_s3_public_access(s3, bucket_name),
         'Location': get_bucket_location(s3, bucket_name),
         'Versioning': get_bucket_versioning(s3, bucket_name),
+        'Tagging': get_bucket_tagging(s3, bucket_name),
     }
 
     if not noai:

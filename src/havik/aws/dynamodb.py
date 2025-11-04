@@ -28,7 +28,7 @@ from havik.shared import output, llm, risk, compliance
 
 
 DEFAULT_REGION = getenv('AWS_DEFAULT_REGION', 'eu-central-1')
-
+SERVICE_NAME = "dynamodb"
 
 def list_tables(ddb_client: Client) -> list:
     '''
@@ -75,6 +75,26 @@ def get_pitr_status(ddb_client: Client, table_name: str) -> str:
     return response['ContinuousBackupsDescription']['PointInTimeRecoveryDescription']['PointInTimeRecoveryStatus']
 
 
+def evaluate_dynamodb_encryption(table_desc: dict) -> dict:
+    '''
+    
+    '''
+    encryption = table_desc.get('SSEDescription', {})
+    master_key_arn = encryption.get('KMSMasterKeyArn')
+
+    if master_key_arn:
+        key_location = get_region_from_arn(master_key_arn)
+    else:
+        key_location = get_region_from_arn(table_desc['TableArn'])
+
+    return {
+        'Status': encryption.get('Status'),
+        'Algorithm': encryption.get('SSEType'),
+        'Key': master_key_arn,
+        'KeyLocation': key_location,
+    }
+
+
 def evaluate_table_policy(ddb_client: Client, table_name: str):
     '''
         This functions evaluates resource-based policy of the table.
@@ -89,7 +109,10 @@ def evaluate_table_policy(ddb_client: Client, table_name: str):
             ResourceArn=table_arn
         )
     except ddb_client.exceptions.PolicyNotFoundException as err:
-        return {}
+        return {
+            'Status': 'None',
+            'Reason': 'No policy'
+        }
 
     policy = loads(response['Policy'])
 
@@ -138,19 +161,22 @@ def scan_table(ddb_client: Client, table_name: str, noai: bool) -> tuple[str, di
 
     result = {
         'ResourceName': table_name,
-        'CreationDate': table_desc['CreationDateTime'],
-        'Encryption': table_desc.get('SSEDescription', {}).get('Status'),
+        'CreationDate': str(table_desc['CreationDateTime']),
+        'Encryption': evaluate_dynamodb_encryption(table_desc),
         'BackupStatus': get_pitr_status(ddb_client, table_name),
-        'Location': get_region_from_arn(table_arn)
+        'Location': get_region_from_arn(table_arn),
+        'PublicAccess': {'Status': ''}
     }
 
     if not noai:
         result['PolicyEval'] = evaluate_table_policy(ddb_client, table_name)
 
+    result['Risk'] = risk.calculate_risk_score(result, noai, service_name=SERVICE_NAME)
+
     return table_name, result
 
 
-def evaluate_ddb_security(noai: bool, json: bool, html: bool) -> None:
+def evaluate_dynamodb_security(noai: bool, json: bool, html: bool) -> None:
     '''
         Runs different security checks on DynamoDB tables in the account and reports the results
 

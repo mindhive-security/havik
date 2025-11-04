@@ -26,10 +26,7 @@
     threat model.
 '''
 import argparse
-
-from havik import aws
-from havik import gcp
-from havik import az
+import importlib
 
 SUPPORTED_SERVICES_AWS = ['s3', 'dynamodb']
 SUPPORTED_SERVICES_GCP = ['storage']
@@ -62,37 +59,14 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.provider == 'aws':
-        if args.service == 's3':
-            aws.s3.evaluate_s3_security(
-                noai=args.no_ai,
-                json=args.json,
-                html=args.html)
-        elif args.service == 'dynamodb':
-            aws.dynamodb.evaluate_ddb_security(
-                noai=args.no_ai,
-                json=args.json,
-                html=args.html)
-        else:
-            print(f'Service {args.service} is not supported.')
-            print(f'Supported services: {", ".join(SUPPORTED_SERVICES_AWS)}')
-    elif args.provider == 'gcp':
-        if args.service == 'storage':
-            gcp.storage.evaluate_storage_security(
-                noai=args.no_ai, json=args.json, html=args.html)
-        else:
-            print(f'Service {args.service} is not supported.')
-            print(f'Supported services: {", ".join(SUPPORTED_SERVICES_GCP)}')
-    elif args.provider == 'az':
-        if not args.subscription:
-            parser.error('--subscription is required when provider is "az"')
-
-        if args.service == 'storage':
-            az.storage_account.evaluate_storage_security(
-                sub=args.subscription,
-                noai=args.no_ai,
-                json=args.json,
-                html=args.html)
-        else:
-            print(f'Service {args.service} is not supported.')
-            print(f'Supported services: {", ".join(SUPPORTED_SERVICES_AZ)}')
+    try:
+        module = importlib.import_module(f'havik.{args.provider}.{args.service}')
+        func = getattr(module, f'evaluate_{args.service}_security')
+    except (ModuleNotFoundError, AttributeError):
+        print(f'Unsupported combination: {args.provider}/{args.service}')
+        print('Supported services: ')
+        print(f'AWS: {",".join(SUPPORTED_SERVICES_AWS)}')
+        print(f'Azure: {",".join(SUPPORTED_SERVICES_AZ)}')
+        print(f'GCP: {",".join(SUPPORTED_SERVICES_GCP)}')
+    else:
+        func(noai=args.no_ai, json=args.json, html=args.html)

@@ -96,7 +96,7 @@ def access_risk(public_access_config: str, policy_eval: str) -> int:
     return weight
 
 
-def calculate_risk_score(security_config: dict, noai: bool) -> int:
+def calculate_risk_score(security_config: dict, noai: bool, service_name: str) -> int:
     risk_score = 0
     risk_reason = ''
 
@@ -108,6 +108,6 @@ def calculate_risk_score(security_config: dict, noai: bool) -> int:
 
     # TODO: Decide if this is needed at all, it is quite sofisticated evaluation with uncertain value.
     if not noai:
-        risk_reason = agent.explain_bucket_risk(security_config, risk_score)
+        risk_reason = agent.explain_bucket_risk(security_config, risk_score, service_name)
 
     return {'Score': risk_score, 'Reason': risk_reason}

@@ -73,4 +73,4 @@ def test_no_encryption(create_table):
     ddb, table_name = create_table
 
     _, result = scan_table(ddb, table_name, False)
-    assert result['Encryption'] == None
+    assert result['Encryption'] is None
