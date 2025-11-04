@@ -19,16 +19,12 @@ from boto3 import client as Client
 from botocore import exceptions
 from concurrent.futures import ThreadPoolExecutor, wait, FIRST_COMPLETED
 from json import dumps, loads
-from os import getenv
 from tqdm import tqdm
 
-from .helpers import get_client, get_arn_from_name, get_aws_account_id, get_aws_region, get_region_from_arn
+from .helpers import get_client, get_region_from_arn
 
 from havik.shared import output, llm, risk, compliance
 
-
-DEFAULT_REGION = getenv('AWS_DEFAULT_REGION', 'eu-central-1')
-SERVICE_NAME = "dynamodb"
 
 def list_tables(ddb_client: Client) -> list:
     '''
@@ -77,7 +73,7 @@ def get_pitr_status(ddb_client: Client, table_name: str) -> str:
 
 def evaluate_dynamodb_encryption(table_desc: dict) -> dict:
     '''
-    
+
     '''
     encryption = table_desc.get('SSEDescription', {})
     master_key_arn = encryption.get('KMSMasterKeyArn')
@@ -95,15 +91,13 @@ def evaluate_dynamodb_encryption(table_desc: dict) -> dict:
     }
 
 
-def evaluate_table_policy(ddb_client: Client, table_name: str):
+def evaluate_table_policy(ddb_client: Client, table_arn: str):
     '''
         This functions evaluates resource-based policy of the table.
 
         Args: (boto3.Client) ddb_client - boto3 DynamoDB client
               (str) table_name - The name of the table
     '''
-    table_arn = get_arn_from_name('dynamodb', DEFAULT_REGION, get_aws_account_id(), f'table/{table_name}')
-
     try:
         response = ddb_client.get_resource_policy(
             ResourceArn=table_arn
@@ -145,13 +139,15 @@ def evaluate_table_policy(ddb_client: Client, table_name: str):
     }
 
 
-def scan_table(ddb_client: Client, table_name: str, noai: bool) -> tuple[str, dict]:
+def scan_table(ddb_client: Client, table_name: str, noai: bool, provider: str, service: str) -> tuple[str, dict]:
     '''
         This function scans security configuration of the DynamoDB table.
 
         Args: (boto3.Client) ddb_client - boto3 DynamoDB client
               (str) table_name - The name of the table
               (bool) noai - Flag disabling evaluation by AI
+              provider
+              service
 
         Returns: (str) table_name - The name of the table
                  (dict) response - Response from DynamoDB API containing table description
@@ -169,14 +165,14 @@ def scan_table(ddb_client: Client, table_name: str, noai: bool) -> tuple[str, di
     }
 
     if not noai:
-        result['PolicyEval'] = evaluate_table_policy(ddb_client, table_name)
+        result['PolicyEval'] = evaluate_table_policy(ddb_client, table_arn)
 
-    result['Risk'] = risk.calculate_risk_score(result, noai, service_name=SERVICE_NAME)
+    result['Risk'] = risk.calculate_risk_score(result, noai, provider, service)
 
     return table_name, result
 
 
-def evaluate_dynamodb_security(noai: bool, json: bool, html: bool) -> None:
+def evaluate_dynamodb_security(noai: bool, json: bool, html: bool, provider: str, service: str) -> None:
     '''
         Runs different security checks on DynamoDB tables in the account and reports the results
 
@@ -184,6 +180,8 @@ def evaluate_dynamodb_security(noai: bool, json: bool, html: bool) -> None:
             (bool) noai - disable evaluation with LLM
             (bool) json - output in JSON format
             (bool) html - output in HTML format
+            provider
+            service
         Returns: None
     '''
     ddb_client = get_client('dynamodb')
@@ -193,7 +191,7 @@ def evaluate_dynamodb_security(noai: bool, json: bool, html: bool) -> None:
     table_security = {}
 
     with ThreadPoolExecutor(max_workers=16) as executor:
-        futures = [executor.submit(scan_table, ddb_client, table_name, noai) for table_name in tables]
+        futures = [executor.submit(scan_table, ddb_client, table_name, noai, provider, service) for table_name in tables]
         total = len(futures)
         done = set()
 

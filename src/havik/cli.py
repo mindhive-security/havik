@@ -69,4 +69,4 @@ def main() -> None:
         print(f'Azure: {",".join(SUPPORTED_SERVICES_AZ)}')
         print(f'GCP: {",".join(SUPPORTED_SERVICES_GCP)}')
     else:
-        func(noai=args.no_ai, json=args.json, html=args.html)
+        func(noai=args.no_ai, json=args.json, html=args.html, provider=args.provider, service=args.service)

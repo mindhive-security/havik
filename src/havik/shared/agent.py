@@ -13,7 +13,7 @@ llm = OllamaLLM(
 )
 
 
-def explain_bucket_risk(config: dict, score: int, service_name: str) -> dict:
+def explain_risk(config: dict, score: int, provider: str, service: str) -> dict:
     '''
         This function uses LLM to evaluate risk score and gives recommendations.
         It uses LLM to define if the resource is compliant to top level regulations.
@@ -31,7 +31,6 @@ def explain_bucket_risk(config: dict, score: int, service_name: str) -> dict:
     policy_reason = config['PolicyEval']['Reason']
     creation_date = config['CreationDate']
     location = config['Location']
-    service = service_name
 
     extra_context = '''
 DORA (Digital Operational Resilience Act) is an EU regulation that requires financial institutions to implement secure ICT risk management practices, including data encryption, secure access policies, and clear accountability for third-party service providers.
@@ -40,7 +39,7 @@ DORA (Digital Operational Resilience Act) is an EU regulation that requires fina
     prompt = PromptTemplate.from_template(f'''
 You are a cloud security expert.
 
-A cloud resource in service {service} named "{resource_name}" has a calculated risk score of {score} out of 100.
+A cloud resource in {provider} part of {service} named "{resource_name}" has a calculated risk score of {score} out of 100.
 
 Here is the configuration:
 - Encryption algorithm: {encryption.get('Algorithm')}

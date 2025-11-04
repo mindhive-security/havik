@@ -28,9 +28,6 @@ from havik.shared import output, llm, risk, compliance
 from .helpers import parse_arn, get_client
 
 
-SERVICE_NAME = "S3"
-
-
 # Encryption settings
 def get_bucket_encryption(s3: Client, bucket: str) -> dict:
     '''
@@ -309,13 +306,15 @@ def evaluate_bucket_policy(s3: Client, bucket: str) -> dict:
     }
 
 
-def scan_bucket(s3: Client, bucket: str, noai: bool) -> tuple[str, dict]:
+def scan_bucket(s3: Client, bucket: str, noai: bool, provider: str, service: str) -> tuple[str, dict]:
     '''
         Run security checks agains the bucket.
 
         Args: (boto3.client) s3 - S3 client
               (str) bucket - name of S3 bucket to be scanned
               (bool) noai - disable evaluation with LLM
+              provider
+              service
 
         Returns: (str) bucket_name, (dict) result - the name of the bucket and evaluation dictionary
     '''
@@ -334,7 +333,7 @@ def scan_bucket(s3: Client, bucket: str, noai: bool) -> tuple[str, dict]:
     if not noai:
         result['PolicyEval'] = evaluate_bucket_policy(s3, bucket_name)
 
-    result['Risk'] = risk.calculate_risk_score(result, noai)
+    result['Risk'] = risk.calculate_risk_score(result, noai, provider, service)
 
     compliance_checks = ['Encryption', 'PublicAccess', 'Location', 'Versioning']
     result['Compliance'] = {'CSA_CCM': {}}
@@ -343,7 +342,7 @@ def scan_bucket(s3: Client, bucket: str, noai: bool) -> tuple[str, dict]:
     return bucket_name, result
 
 
-def evaluate_s3_security(noai: bool, json: bool, html: bool) -> None:
+def evaluate_s3_security(noai: bool, json: bool, html: bool, provider: str, service: str) -> None:
     '''
         Runs different security checks on S3 buckets in the account and reports the results
 
@@ -351,6 +350,8 @@ def evaluate_s3_security(noai: bool, json: bool, html: bool) -> None:
             (bool) noai - disable evaluation with LLM
             (bool) json - output in JSON format
             (bool) html - output in HTML format
+            provider
+            service
         Returns: None
     '''
     s3_client = get_client('s3')
@@ -360,7 +361,7 @@ def evaluate_s3_security(noai: bool, json: bool, html: bool) -> None:
     bucket_security = {}
 
     with ThreadPoolExecutor(max_workers=16) as executor:
-        futures = [executor.submit(scan_bucket, s3_client, bucket, noai) for bucket in buckets]
+        futures = [executor.submit(scan_bucket, s3_client, bucket, noai, provider, service) for bucket in buckets]
         total = len(futures)
         done = set()
 
