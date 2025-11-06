@@ -4,9 +4,9 @@
 
 ## ✨ Features
 
-- 🔐 Encryption checks (S3/GCS buckets)
+- 🔐 Encryption checks (S3, DynamoDB/GCS buckets)
 - 🌍 Public access detection
-- 🔎 IAM policy analysis using LLMs (for AWS S3)
+- 🔎 IAM policy analysis using LLMs (for AWS services)
 - 📊 Output in human-readable tables or JSON and HTML
 - ⚙️ Modular structure, ready to scale across clouds and services
 - Maps to CSA CCM controls
@@ -73,6 +73,7 @@ export LLM_HOST=http://localhost:11434
 ## 🧠 Roadmap
 
 - ✅ AWS S3: encryption, public access, IAM analysis
+- ✅ AWS DynamoDB: encryption, IAM analysis
 - ✅ GCP Storage: encryption, public access
 - ✅ Azure Storage Account: encryption
 - ⏳ Resource inventory module
@@ -94,7 +95,7 @@ src/havik/
 
 ## 📝 License
 
-MIT — free to use, fork, and extend.
+Apache License 2.0 - you can use the software for any purpose.
 
 ---
 
