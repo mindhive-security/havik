@@ -96,7 +96,17 @@ def access_risk(public_access_config: str, policy_eval: str) -> int:
     return weight
 
 
-def calculate_risk_score(security_config: dict, noai: bool, provider: str, service: str) -> int:
+def calculate_risk_score(security_config: dict, noai: bool, provider: str, service: str) -> dict:
+    '''
+        Calculates the risk score based on resource configuration.
+
+        Args: (dict) security_config - Resource configuration
+              (bool) noai - Flag to disable LLM usage
+              (str) provider - Cloud provider
+              (str) service - Cloud service
+
+        Returns: (dict) - Object with risk score and reason
+    '''
     risk_score = 0
     risk_reason = ''
 

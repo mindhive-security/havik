@@ -14,7 +14,7 @@
 '''
     Here stored useful functions, called by other modules
 '''
-from boto3 import client, Session
+from boto3 import Session, client as Client
 
 
 def parse_arn(arn: str) -> list:
@@ -27,25 +27,64 @@ def parse_arn(arn: str) -> list:
     return arn.split(':')
 
 
-def get_client(service: str, region_name: str = 'eu-central-1'):
-    return client(service, region_name=region_name)
+def get_client(service: str, region_name: str = 'eu-central-1') -> Client:
+    '''
+        Returns boto3 client in the specified region.
+
+        Args: (str) service - AWS service
+              (str) region_name - Name of AWS region
+
+        Returns: (boto3.client) - boto3 client
+    '''
+    return Client(service, region_name=region_name)
 
 
 def get_arn_from_name(service: str, region: str, account_id: str, resource_id: str) -> str:
+    '''
+        Creates AEN from a resource name.
+
+        Args: (str) service - AWS service
+              (str) region - AWS region
+              (str) account_id - AWS account ID
+              (str) resource_id - resource_type/resource_id
+
+        Returns: (str) - AWS ARN
+    '''
     return f'arn:aws:{service}:{region}:{account_id}:{resource_id}'
 
 
 def get_aws_account_id() -> str:
-    sts = client('sts')
+    '''
+        Gets account id from the current boto3 session.
+
+        Args: None
+
+        Returns: (str) - account id
+    '''
+    sts = Client('sts')
 
     return sts.get_caller_identity()['Account']
 
 
-def get_aws_region():
+def get_aws_region() -> str:
+    '''
+        Gets AWS region from the current boto3.session.
+
+        Args: None
+
+        Returns: (str) - AWS region name
+    '''
     session = Session()
 
     return session.region_name
 
 
 def get_region_from_arn(arn: str) -> str:
+    '''
+        Gets region from ARN.
+
+        Args: (str) - Resource ARN
+
+        Returns: (str) - region name
+    '''
     return parse_arn(arn)[3]

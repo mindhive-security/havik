@@ -73,7 +73,11 @@ def get_pitr_status(ddb_client: Client, table_name: str) -> str:
 
 def evaluate_dynamodb_encryption(table_desc: dict) -> dict:
     '''
+        This function evaluates encryption applied to the table.
 
+        Args: (dict) table_desc - Object with table description.
+
+        Return: (dict) - Object with encryption data
     '''
     encryption = table_desc.get('SSEDescription', {})
     master_key_arn = encryption.get('KMSMasterKeyArn')
@@ -146,8 +150,8 @@ def scan_table(ddb_client: Client, table_name: str, noai: bool, provider: str, s
         Args: (boto3.Client) ddb_client - boto3 DynamoDB client
               (str) table_name - The name of the table
               (bool) noai - Flag disabling evaluation by AI
-              provider
-              service
+              (str) provider - cloud provider
+              (str) service - cloud service
 
         Returns: (str) table_name - The name of the table
                  (dict) response - Response from DynamoDB API containing table description
@@ -179,8 +183,8 @@ def evaluate_dynamodb_security(noai: bool, json: bool, html: bool, provider: str
             (bool) noai - disable evaluation with LLM
             (bool) json - output in JSON format
             (bool) html - output in HTML format
-            provider
-            service
+            (str) provider - cloud provider
+            (str) service - cloud service
         Returns: None
     '''
     ddb_client = get_client('dynamodb')
