@@ -172,6 +172,10 @@ def scan_table(ddb_client: Client, table_name: str, noai: bool, provider: str, s
 
     result['Risk'] = risk.calculate_risk_score(result, noai, provider, service)
 
+    compliance_checks = ['Encryption', 'Location', 'Versioning']
+    result['Compliance'] = {'CSA_CCM': {}}
+    result['Compliance']['CSA_CCM'] = compliance.ccm_map('AWS', 'DynamoDB', compliance_checks)
+
     return table_name, result
 
 
