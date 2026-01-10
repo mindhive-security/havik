@@ -2,16 +2,16 @@
 
 **Havik** is a modular CLI tool designed to scan and analyze security configurations in public cloud environments. It currently supports AWS, Azure and GCP. The tool helps identify weak spots such as missing encryption, overly permissive access, and insecure IAM policies — especially where native tools like AWS Security Hub fall short. The tool generates reports in CLI, JSON and HTML. It also maps the configurations to CSA CCM controls.
 
-## ✨ Features
+## Features
 
-- 🔐 Encryption checks (S3, DynamoDB/GCS buckets)
-- 🌍 Public access detection
-- 🔎 IAM policy analysis using LLMs (for AWS services)
-- 📊 Output in human-readable tables or JSON and HTML
-- ⚙️ Modular structure, ready to scale across clouds and services
+- Encryption checks (S3, DynamoDB/GCS buckets)
+- Public access detection
+- IAM policy analysis using LLMs (for AWS services)
+- Output in human-readable tables or JSON and HTML
+- Modular structure, ready to scale across clouds and services
 - Maps to CSA CCM controls
 
-## 🚀 Installation
+## Installation
 
 You can install locally using Python:
 
@@ -23,7 +23,7 @@ python -m pip install .
 
 > **Note**: `pyproject.toml` and dependency management included. PyPI packaging is planned.
 
-## ⚡ Quick Start
+## Quick Start
 
 ### Usage
 
@@ -56,7 +56,7 @@ havik az storage # Security configuration of Azure storage account
 
 With --html flag the report is produced locally in html/reports/index.html. This report contains all information about the resource configuration and provides mapping to CSA Cloud Controls Matrix (CCM) controls. Later this feature will be extended to generic DORA paragraphs and other regulations articles. This mapping will be done on best approach combining static mapping and LLM evaluation.
 
-### 🔍 AI-Assisted IAM Policy Evaluation (Optional)
+### AI-Assisted IAM Policy Evaluation (Optional)
 
 This tool can evaluate bucket IAM policies using a local LLM (e.g., Mistral) for heuristic risk analysis. This feature is **optional** and currenty only works if:
 
@@ -70,7 +70,7 @@ ollama run mistral
 export LLM_HOST=http://localhost:11434
 ```
 
-## 🧠 Roadmap
+## Roadmap
 
 - ✅ AWS S3: encryption, public access, IAM analysis
 - ✅ AWS DynamoDB: encryption, IAM analysis
@@ -81,7 +81,7 @@ export LLM_HOST=http://localhost:11434
 - ⏳ Plugin support per cloud/service
 - ⏳ Web interface or full SaaS version
 
-## 🗂 Project Structure
+## Project Structure
 
 ```
 src/havik/
@@ -93,18 +93,18 @@ src/havik/
 
 > Note: Output handling is currently mixed with logic — planned refactor will separate concerns.
 
-## 📝 License
+## License
 
 Apache License 2.0 - you can use the software for any purpose.
 
 ---
 
-## ❤️ Contributing
+## Contributing
 
 This is an early-stage project. All contributions, issue reports, and suggestions are welcome!
 
 ---
 
-## 🌍 Vision
+## Vision
 
 Havik Scanner aims to be a vendor-agnostic, open-source solution that complements native cloud security tooling — especially for European companies with strong compliance needs.
